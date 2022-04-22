@@ -16,7 +16,7 @@ for(i in 1:7){
   df[df$day <= (i*7) & df$day > 7*(i-1), ]$treatment <- rep(trt2[i:(i+6)], 7)
 }
 
-df$total <- rnbinom(343, size = 1.8, mu = 18)
+df$total <- rnbinom(343, size = 2, mu = 8)
 mean(df$total)
 #Slightly more mosquitoes in control huts?
 df[df$treatment=='C',]$total <- rnbinom(49, size = 1.8, mu = 23)
@@ -44,7 +44,7 @@ for(i in 1:343){
       ntt <- 0
     }else ntt <- 1
     #How many died?
-    aux <- rbinom(1, tz, logistic(-2.35 + 2*ntt - 0.5*ww + rnorm(1,0,0.5)))
+    aux <- rbinom(1, tz, logistic(-2.9 + 2.1*ntt - 0.6*ww + rnorm(1,0,0.5)))
     #How many blood fed?
     if(aux == 0){
       df$unf_dead[i] <- 0

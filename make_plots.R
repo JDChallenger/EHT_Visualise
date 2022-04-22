@@ -40,3 +40,4 @@ plot_grid(pnel1(dataa = df, arm = 'C', arm_title = 'Control', mx=mx),
           error_bar_prop(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)'),
           nrow=2, labels = c('a','b','c','d','e','f'))
 # Saved figure may need to be quite big, to fit everything in!!
+ggsave('Six_panel_figure.pdf',height = 12.0, width = 17.0)

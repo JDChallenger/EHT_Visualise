@@ -92,30 +92,60 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
                        levels = c('Unfed Dead','Fed Dead', 'Unfed Alive','Fed Alive'))
   #dfC, add percentages?
   dfc$valuePC <- paste0(round(100*dfc$value/sum(dfc$value)),'%') #set to '' if equal to "0%"?
+  dfc$valuePCr <- 100*dfc$value/sum(dfc$value)
   #dfc[dfc$valuePC=='0%',]$valuePC <- ''# Only works if true for at least one element
-  dfc$loc <- sum(dfc$value) - cumsum(dfc$value) + 0.67*(dfc$value)
+  dfc$loc <- sum(dfc$value) - cumsum(dfc$value) + 0.5*(dfc$value)
   dfc$x <- rnorm(dim(dfc)[1],1.2,0.04) #random by default??
   # dfc[dfc$value==0,]$x <- 1.55
-  # dfc$col <- '2'
+   dfc$col <- '2'
   # dfc[dfc$value==0,]$col <- '1'
-  # print(dfc)
+   print(dfc)
+   #print(length(which(dfc$valuePCr < 0.5)))
+   if(length(which(dfc$valuePCr < 0.5)) > 0){
+     
+     #print(which(dfc$valuePCr < 1.5))
+     #dfc$col[which(dfc$valuePCr < 0.25)] <- '1'
+     #dfc$x[which(dfc$valuePCr < 1.5)] <- 1.59
+     #trx <- c(cb[5],cb[3],cb[6],cb[4])[which(dfc$valuePCr < 1.5)]
+     dfc$valuePC[which(dfc$valuePCr < 0.5)] <- ""
+     print(dfc)
+     
+     insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
+       geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC +
+       xlab('') + ylab('') +
+       scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
+       theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
+             plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
+       geom_text(aes(x=x,y=loc, label = valuePC), size = 3.4, color = 'white') 
+     #geom_text(aes(x=x,y=loc, label = valuePC, color = factor(col)), size = 3.4) + 
+     #scale_color_manual(values = c(trx,'white'))
+    
+   }else{
+     insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
+       geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC + xlab('') + ylab('') +
+       scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
+       theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
+             plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
+       geom_text(aes(x=x,y=loc, label = valuePC), size = 3.4, color = 'white') 
+     
+   }
   # print(which(dfc$col==1))
   # trx <- c(cb[5],cb[3],cb[6],cb[4])[which(dfc$col==1)]
   
-  insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
-    geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC + xlab('') + ylab('') +
-    scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
-    theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
-          plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
-    geom_text(aes(x=x,y=loc, label = valuePC), size = 3, color = 'white') 
-    #geom_text(aes(x=x,y=loc, label = valuePC, color = factor(col)), size = 3.4) + 
-    #scale_color_manual(values = c(trx,'white'))
-  insetC
-  
+  # insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
+  #   geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC + xlab('') + ylab('') +
+  #   scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
+  #   theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
+  #         plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
+  #   geom_text(aes(x=x,y=loc, label = valuePC), size = 3, color = 'white') 
+  #   #geom_text(aes(x=x,y=loc, label = valuePC, color = factor(col)), size = 3.4) + 
+  #   #scale_color_manual(values = c(trx,'white'))
+  # insetC
+  # 
   MH_C_i <-
     ggdraw() +
-    draw_plot(MH_C) +
-    draw_plot(insetC, x = 0.1, y = .56, width = .42, height = .42)
+     draw_plot(MH_C) +
+     draw_plot(insetC, x = 0.1, y = .56, width = .42, height = .42)
   MH_C_i
 }
 
