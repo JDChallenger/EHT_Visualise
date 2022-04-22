@@ -51,6 +51,7 @@ themeJDC <-
 # (iv) Pie chart labels can be v close together if certain segments < 1%. I've added some random jitter to improve,
 # so you can re-run if labels overlap
 # (v) Could move % outside the pie chart, and change text colour if value=0, or v close to 0?
+# (vi) Useful to be able to move pie charts, depending on when the high mosquito numbers occur?
 
 pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
                   leg_end = 0, legX = 0.8, legY = 0.8){
