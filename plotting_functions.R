@@ -54,7 +54,7 @@ themeJDC <-
 # (vi) Useful to be able to move pie charts, depending on when the high mosquito numbers occur?
 
 pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
-                  leg_end = 0, legX = 0.8, legY = 0.8){
+                  leg_end = 0, legX = 0.8, legY = 0.8, pieX = 0.1, pieY = 0.56){
   dataCB5 <- dplyr::select(dataa, c('day','treatment','unf_live','unf_dead','bf_live','bf_dead'))
   
   minn <- min(dataCB5$day)
@@ -145,7 +145,7 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
   MH_C_i <-
     ggdraw() +
      draw_plot(MH_C) +
-     draw_plot(insetC, x = 0.1, y = .56, width = .42, height = .42)
+     draw_plot(insetC, x = pieX, y = pieY, width = .42, height = .42)
   MH_C_i
 }
 
