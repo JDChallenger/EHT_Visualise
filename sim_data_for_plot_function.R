@@ -1,4 +1,8 @@
-library(rethinking) #only need for logistic fn- could write your own :)
+
+#user-defined function, to convert from log-odds scale to probability scale
+lgistic <- function(theta){
+  exp(theta)/(1+exp(theta))
+}
 
 #Aim: take a trial structure, and simulate new data.
 #Starting pt: One rotation of a 7-hut design. Each net stays in one hut for seven days
@@ -46,19 +50,19 @@ for(i in 1:343){
       ntt <- 0
     }else ntt <- 1
     #How many died?
-    aux <- rbinom(1, tz, logistic(-2.9 + 2.1*ntt - 0.6*ww + 0.15*df$sleeper[i] -0.2*df$hut[i] + rnorm(1,0,0.55)))
+    aux <- rbinom(1, tz, lgistic(-2.9 + 2.1*ntt - 0.6*ww + 0.15*df$sleeper[i] -0.2*df$hut[i] + rnorm(1,0,0.55)))
     #How many blood fed?
     if(aux == 0){
       df$unf_dead[i] <- 0
       df$bf_dead[i] <- 0
-      aux2 <- rbinom(1, tz, logistic(-0.8 - 0.8*ntt + 0.4*ww + rnorm(1,0,0.25)))
+      aux2 <- rbinom(1, tz, lgistic(-0.8 - 0.8*ntt + 0.4*ww + rnorm(1,0,0.25)))
       df$unf_live[i] <- tz - aux2
       df$bf_live[i] <- aux2
     }else{
-      aux3 <- rbinom(1,aux,logistic(-0.8 - 0.8*ntt + 0.4*ww + rnorm(1,0,0.25)))
+      aux3 <- rbinom(1,aux,lgistic(-0.8 - 0.8*ntt + 0.4*ww + rnorm(1,0,0.25)))
       df$unf_dead[i] <- aux - aux3
       df$bf_dead[i] <- aux3
-      aux4 <- rbinom(1,tz - aux,logistic(-0.8 - 0.8*ntt + 0.4*ww + rnorm(1,0,0.25)))
+      aux4 <- rbinom(1,tz - aux,lgistic(-0.8 - 0.8*ntt + 0.4*ww + rnorm(1,0,0.25)))
       df$unf_live[i] <- tz - aux - aux4
       df$bf_live[i] <- aux4
     }
