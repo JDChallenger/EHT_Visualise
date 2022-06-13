@@ -95,7 +95,7 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
   dfc$valuePCr <- 100*dfc$value/sum(dfc$value)
   #dfc[dfc$valuePC=='0%',]$valuePC <- ''# Only works if true for at least one element
   dfc$loc <- sum(dfc$value) - cumsum(dfc$value) + 0.5*(dfc$value)
-  dfc$x <- rnorm(dim(dfc)[1],1.2,0.04) #random by default??
+  dfc$x <- rnorm(dim(dfc)[1],1.2,0.08) #random by default??
   # dfc[dfc$value==0,]$x <- 1.55
    dfc$col <- '2'
   # dfc[dfc$value==0,]$col <- '1'
@@ -274,7 +274,7 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     bfi_plot <- ggplot(dfALL, aes(x=net, fill = group, y=valuePC2)) + geom_bar(position="stack", stat="identity") + 
       scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6])) + themeJDC + coord_flip() + 
       # Indent title, to avoid overlap with panel label
-      ggtitle('    Blood Fed per feeding attempt') + theme(legend.position = 'none', axis.ticks = element_blank(),
+      ggtitle('    Blood Fed per feeding attempt') + theme(legend.position = 'bottom', axis.ticks = element_blank(),
                                                            axis.title = element_blank(), axis.text = element_blank()) +
       annotate('text', x = 1.0, y = 0.2, label = arm_label1, size = sz) + 
       annotate('text', x = 2.0, y = 0.2, label = arm_label2, size = sz) + 
