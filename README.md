@@ -6,7 +6,7 @@ It is important that you install both R and Rstudio before starting the tutorial
 
 Once you have installed R and Rstudio, click on the green button 'Code' near the top of this page, and select 'Download ZIP'. After you've extracted the files, open the R project file 'EHT_Visualise.Rproj' in Rstudio. Then open the tutorial script 'script_for_tutorial.R'. This script will allow you to load and view the data, and perform the data analysis.
 
-There are some R packages you will need to install in order to carry out the analyses. For convenience we list them here, along with the instruction to install them:
+There are some R packages you will need to install in order to carry out the analyses. For convenience we list them here, along with the command to install them:
 
 ```
 install.packages(c('lme4','devtools','MASS','RColorBrewer','cowplot','ggplot2','dplyr','reshape2'))

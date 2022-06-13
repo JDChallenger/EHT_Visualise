@@ -145,6 +145,7 @@ coef(summary(fit))["treatmentN1u", "Estimate"]
 #InvLogit(coef(summary(fit))["treatmentN1u", "Estimate"])
 InvLogit(coef(summary(fit))["(Intercept)", "Estimate"] + coef(summary(fit))["treatmentN1u", "Estimate"])
 
+#Add confidence intervals
 
 ###################################################################################
 #######       Section 4. Modelling deterrence                ######################
@@ -215,6 +216,7 @@ fit <-
 #               optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
 summary(fit)
 
+#Do we need this?
 rrho <- vcov(fit_n)[3,4]/(sqrt(vcov(fit_n)[3,3])*sqrt(vcov(fit_n)[4,4]))
 ssigma <- sqrt(vcov(fit_n)[3,3] + vcov(fit_n)[4,4] - 2 * rrho *(sqrt(vcov(fit_n)[3,3]) *(sqrt(vcov(fit_n)[4,4]))))
 OR <- exp(coef(summary(fit_n))["netN3", "Estimate"] - coef(summary(fit_n))["netN2", "Estimate"])
