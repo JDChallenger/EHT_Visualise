@@ -29,11 +29,11 @@ InvLogit <- function(X){
 set.seed(12443)
 source('sim_data_for_plot_function.R')
 
-# Alternatively, you could Load a previously generated dataset. 
-# This could be replaced with a real dataset of interest
-# Data is for a 7-arm trial, with one full rotation (343 data points)
+# Alternatively, you could load a previously generated dataset. 
 # df <- readRDS('data_for_plot.rds')
+# Or use a real dataset of interest
 
+# Data is for a 7-arm trial, with one full rotation (343 data points)
 #Let's look at the data
 dim(df)
 head(df)

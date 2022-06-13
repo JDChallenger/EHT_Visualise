@@ -6,3 +6,12 @@ It is important that you install both R and Rstudio before starting the tutorial
 
 There are some R packages you will need to install in order to carry out the analyses. For convenience we list them here, along with the instruction to install them:
 
+```
+install.packages(c('lme4','devtools','MASS','RColorBrewer','cowplot','ggplot2','dplyr','reshape2'))
+```
+
+There is one remaining package to install. After the `devtools` package is installed, you should be able to run the following command to install the `GLMMmisc` package:
+```
+devtools::install_github("pcdjohnson/GLMMmisc")
+```
+
