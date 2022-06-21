@@ -212,7 +212,7 @@ tapply(df$total, df$treatment, mean)
 16.387755  9.714286 10.836735 10.061224 11.102041  8.469388 12.653061 
 \end{verbatim}
 In this EHT, it appears that fewer mosquitoes entered huts containing ITNs, compared with those containing the untreated nets. 
-We will use a different type of regression model to examine this. This is because we will be dealing with mosquito count data, rather than looking at proportions (\textit{e.g.} proportion of mosquitoes killed or blood fed). Count data can be analysed by using a Poisson distribution, or a two-parameter distribution, such as the negative binomial. The latter is used when the count data are \textit{overdispersed}, \textit{i.e.} the standard deviation of the data is greater than its mean value. It is possible to perform a statistical test (\textit{include here?}), to see which distribution to use. However, in our experience with EHT trials, the data are almost always overdipsersed. Therefore, we will use the negative binomial distribution in this document. We perform a negative binomial regression using the function \verb+glmer.nb()+, also from the \verb+lme4+ package.
+We will use a different type of regression model to examine this. This is because we will be dealing with mosquito count data, rather than looking at proportions (\textit{e.g.} proportion of mosquitoes killed or blood fed). Count data can be analysed by using a Poisson distribution, or a two-parameter distribution, such as the negative binomial. The latter is used when the count data are \textit{overdispersed}, \textit{i.e.} the standard deviation of the data is greater than its mean value. It is possible to perform a statistical test, to see which distribution to use. However, in our experience with EHT trials, the data are almost always overdipsersed. Therefore, we will use the negative binomial distribution in this document. We perform a negative binomial regression using the function \verb+glmer.nb()+, also from the \verb+lme4+ package.
 \begin{verbatim}
 fit_nb <- glmer.nb(total ~ treatment + (1|sleeper), data = df)
 summary(fit_nb)
@@ -282,7 +282,7 @@ df$treatment <- relevel(df$treatment,"N1u")
 #check the levels again
 levels(df$treatment)
 \end{verbatim}
-Once this has been carried out, we can run the regression analysis again, and find the desired p value. \textit{To do: actually show this- and also state that the fixed-effect has to be positive for superiority: if it's negative \& significant this means it's inferior!!}
+Once this has been carried out, we can run the regression analysis again, and find the desired p value.
 
 
 \section{Non-inferiority trials}
