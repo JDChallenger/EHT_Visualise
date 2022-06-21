@@ -116,14 +116,27 @@ fit <-
     family = binomial, data = df) 
 summary(fit)
 
-#Convert to mortality scale
 fit@beta
 coef(summary(fit))["(Intercept)", "Estimate"]
 coef(summary(fit))["treatmentN1u", "Estimate"]
+
+#Convert to mortality scale
 #InvLogit(coef(summary(fit))["treatmentN1u", "Estimate"])
 InvLogit(coef(summary(fit))["(Intercept)", "Estimate"] + coef(summary(fit))["treatmentN1u", "Estimate"])
 
 #Add confidence intervals
+mortality_conf <- function(mod = fit, i = 1, j = 2){
+  rho <- vcov(mod)[i,j]/(sqrt(vcov(mod)[i,i])*sqrt(vcov(mod)[j,j]))
+  #Standard deviation for the difference in the fixed effects
+  sigma <- sqrt(vcov(mod)[i,i] + vcov(mod)[j,j] + 
+                2 * rho *(sqrt(vcov(mod)[i,i]) *(sqrt(vcov(mod)[j,j]))))
+  central <- mod@beta[i] + mod@beta[j]
+  ctl <- round(InvLogit(central),3)
+  upp <- round(InvLogit(central + 1.96*sigma),3)
+  low <- round(InvLogit(central - 1.96*sigma),3)
+return(paste0(ctl,' [',low,' ,',upp,']'))
+}
+mortality_conf(i = 1, j = 2)
 
 #What if we wanted to group data points by type of insecticide, and ignore washing effects?
 #make new variable
@@ -144,7 +157,7 @@ fit_n <-
     family = binomial, data = df) 
 summary(fit_n)
 
-
+#Task: what is the estimated mortality due to net 'N1'? 
 
 ###################################################################################
 #######       Section 4. Modelling deterrence                ######################
@@ -163,34 +176,40 @@ getME(fit_nb, "glmer.nb.theta")
 coef(summary(fit_nb))["(Intercept)", "Estimate"]
 coef(summary(fit_nb))["treatmentN1u", "Std. Error"]
 
+#Number of mosquitoes per night in huts with untreated N1 nets
+exp(coef(summary(fit_nb))["(Intercept)", "Estimate"] + coef(summary(fit_nb))["treatmentN1u", "Estimate"])
 
-#cxrME(fit_nb,k=1,l=1)
-rhoX <- vcov(fit_nb)[1,2]/(sqrt(vcov(fit_nb)[1,1])*sqrt(vcov(fit_nb)[2,2]))
-#Standard deviation for the difference in the fixed effects
-sigmaX <- sqrt(vcov(fit_nb)[1,1] + vcov(fit_nb)[2,2] + 
-                 2 * rhoX *(sqrt(vcov(fit_nb)[1,1]) *(sqrt(vcov(fit_nb)[2,2]))))
-#central
-ct <- coef(summary(fit_nb))[1,1] + coef(summary(fit_nb))[2,1]
-ctl <- exp(ct)
-upp <- exp(ct + 1.96*sigmaX)
-low <- exp(ct - 1.96*sigmaX)
+#Percentage deterrence, based on the central estimates
+100*(1-exp(coef(summary(fit_nb))[1,1] + coef(summary(fit_nb))[2,1])/exp(coef(summary(fit_nb))[1,1]))
 
-c(ctl,low,upp)
-#Percentage deterrence, based on the central estimate?
+deterrence_conf <- function(mod= fit_nb, i = 1, j = 2){ 
+  rhoX <- vcov(mod)[i,j]/(sqrt(vcov(mod)[i,i])*sqrt(vcov(mod)[j,j]))
+  #Standard deviation for the sum in the fixed effects
+  sigmaX <- sqrt(vcov(mod)[i,i] + vcov(mod)[j,j] + 
+                 2 * rhoX *(sqrt(vcov(mod)[i,i]) *(sqrt(vcov(mod)[j,j]))))
+  #central
+  ct <- coef(summary(mod))[i,i] + coef(summary(mod))[j,i]
+  ctl <- round(exp(ct),3)
+  
+  upp <- round(exp(ct + 1.96*sigmaX),3)
+  low <- round(exp(ct - 1.96*sigmaX),3)
 
-100*(1-ctl/exp(coef(summary(fit_nb))[1,1]))
+  return(c(ctl,low,upp))
+}
+deterrence_conf(mod = fit_nb, i = 1, j = 2)
 
 #Note: we have to use a function from another package (MASS), if we wish to fit a model without random effects
 fit_nb2 <- MASS::glm.nb(total ~ treatment, data=df)
 summary(fit_nb2)
 
-cor <- summary(fit_nb2)$cov.unscaled[1,2]/(sqrt(summary(fit_nb2)$cov.unscaled[1,1]) * sqrt(summary(fit_nb2)$cov.unscaled[2,2]))
-sig <- sqrt(summary(fit_nb2)$cov.unscaled[1,1] + summary(fit_nb2)$cov.unscaled[2,2] + 
-              2*cor*sqrt(summary(fit_nb2)$cov.unscaled[1,1])*sqrt(summary(fit_nb2)$cov.unscaled[2,2]))
-ctl2 <- exp(fit_nb2$coefficients[1] + fit_nb2$coefficients[2])
-upp2 <- exp(log(ctl) + 1.96*sig)
-low2 <- exp(log(ctl) - 1.96*sig)
-c(ctl2,low2,upp2)
+#And the notation for extracting the values is slightly different. But we won't use this during this week
+# cor <- summary(fit_nb2)$cov.unscaled[1,2]/(sqrt(summary(fit_nb2)$cov.unscaled[1,1]) * sqrt(summary(fit_nb2)$cov.unscaled[2,2]))
+# sig <- sqrt(summary(fit_nb2)$cov.unscaled[1,1] + summary(fit_nb2)$cov.unscaled[2,2] + 
+#               2*cor*sqrt(summary(fit_nb2)$cov.unscaled[1,1])*sqrt(summary(fit_nb2)$cov.unscaled[2,2]))
+# ctl2 <- exp(fit_nb2$coefficients[1] + fit_nb2$coefficients[2])[1]
+# upp2 <- exp(log(ctl2) + 1.96*sig)
+# low2 <- exp(log(ctl2) - 1.96*sig)
+# c(ctl2[[1]],low2[[1]],upp2[[1]])
 
 ###################################################################################
 #########       Section 5. Testing for superiority             ####################
@@ -210,56 +229,48 @@ fit <-
   glmer(
     cbind(tot_dead, total - tot_dead) ~
       treatment + (1 | hut) + (1 | sleeper) + (1 | observation),
-    family = binomial, data = df) #,  control =
-#  glmerControl(optimizer = "optimx", calc.derivs = FALSE,
-#               optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
+    family = binomial, data = df) 
 summary(fit)
 
-#Do we need this?
-rrho <- vcov(fit_n)[3,4]/(sqrt(vcov(fit_n)[3,3])*sqrt(vcov(fit_n)[4,4]))
-ssigma <- sqrt(vcov(fit_n)[3,3] + vcov(fit_n)[4,4] - 2 * rrho *(sqrt(vcov(fit_n)[3,3]) *(sqrt(vcov(fit_n)[4,4]))))
-OR <- exp(coef(summary(fit_n))["netN3", "Estimate"] - coef(summary(fit_n))["netN2", "Estimate"])
-ORc <- coef(summary(fit_n))["netN3", "Estimate"]-coef(summary(fit_n))["netN2", "Estimate"]
-ci2 <- exp(ORc + 1.96*ssigma)
-ci1 <- exp(ORc - 1.96*ssigma)
-print(paste0(OR,", (",ci1,", ",ci2,")"))
+
 
 ###################################################################################
 #########       Section 6.Testing for non-inferiority       ######################
 ###################################################################################
 
-#What if one was the intercept?
+#Let's test if a candidate net (N3) is non-inferior to net N2 ('active comparator)
+
+# Again, it's easier if N2 ('active comparator' is the control)
 # relevel factors
 df$net <- as.factor(df$net)
 #check the levels
 levels(df$net)
 #relevel
 df$net <- relevel(df$net,"N2") 
-#check the levels
+#check the levels again
 levels(df$net)
 
 fit_n <-
   glmer(
     cbind(tot_dead, total - tot_dead) ~
       net + (1 | hut) + (1 | sleeper) + (1 | observation),
-    family = binomial, data = df) #,  control =
-#  glmerControl(optimizer = "optimx", calc.derivs = FALSE,
-#               optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
+    family = binomial, data = df) 
 summary(fit_n)
 
 exp(coef(summary(fit_n))['netN3','Estimate'])
 exp(coef(summary(fit_n))['netN3','Estimate'] - 1.96*coef(summary(fit_n))['netN3','Std. Error'])
 exp(coef(summary(fit_n))['netN3','Estimate'] + 1.96*coef(summary(fit_n))['netN3','Std. Error'])
 
-non_inf <- function(fit2, label_l = 'netPermanet3', label_k = 'netOlysetPlus', l=4, k=3){
-  rrho <- vcov(fit2)[k,l]/(sqrt(vcov(fit2)[k,k])*sqrt(vcov(fit2)[l,l]))
-  ssigma <- sqrt(vcov(fit2)[k,k] + vcov(fit2)[l,l] - 2 * rrho *(sqrt(vcov(fit2)[k,k]) *(sqrt(vcov(fit2)[l,l]))))
-  OR <- exp(coef(summary(fit2))[label_l, "Estimate"]-coef(summary(fit2))[label_k, "Estimate"])
-  ORc <- coef(summary(fit2))[label_l, "Estimate"]-coef(summary(fit2))[label_k, "Estimate"]
-  ci2 <- exp(ORc + 1.96*ssigma)
-  ci1 <- exp(ORc - 1.96*ssigma)
-  print(paste0(OR,", (",ci1,", ",ci2,")"))
-}
+#Note: without changing the intercept category, the calculation becomes more complicated
+# non_inf <- function(mod = fit_n, label_l = 'netN3', label_k = 'netN2', l=4, k=3){
+#   rrho <- vcov(mod)[k,l]/(sqrt(vcov(mod)[k,k])*sqrt(vcov(mod)[l,l]))
+#   ssigma <- sqrt(vcov(mod)[k,k] + vcov(mod)[l,l] - 2 * rrho *(sqrt(vcov(mod)[k,k]) *(sqrt(vcov(mod)[l,l]))))
+#   OR <- exp(coef(summary(mod))[label_l, "Estimate"]-coef(summary(mod))[label_k, "Estimate"])
+#   ORc <- coef(summary(mod))[label_l, "Estimate"]-coef(summary(mod))[label_k, "Estimate"]
+#   ci2 <- exp(ORc + 1.96*ssigma)
+#   ci1 <- exp(ORc - 1.96*ssigma)
+#   print(paste0(OR,", (",ci1,", ",ci2,")"))
+# }
 
 ###################################################################################
 ########  Section 7. Simulate trials to estimate statistical power      ###########
@@ -316,11 +327,15 @@ mosdata$observation <- factor(formatC(1:nrow(mosdata), flag="0", width=3))
 
 head(mosdata)
 
+# Let's assume a mortality of 30% in net E1, and 40% in Net E2. 
+# If we simulate a trial, can we detect superiority?
+
 #Now we'll use the function sim.glmm() to simulate mosquito mortality in the trial
 #This function was developed by Johnston et al. (https://doi.org/10.1111/2041-210X.12306)
 #Enter fixed effects as odds ratios (compared to the control [intercept]).
 #Write the intercept on the log-odds scale. 
 #We'll assume a mortality of 5% for trial arm with the untreated nets
+
 OR1 <- (0.3/(1-0.3))/(0.05/(1-0.05))
 OR2 <- (0.4/(1-0.4))/(0.05/(1-0.05))
 
