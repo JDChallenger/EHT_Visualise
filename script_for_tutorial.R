@@ -113,11 +113,19 @@ fit <-
   glmer(
     cbind(tot_dead, total - tot_dead) ~
       treatment + (1 | hut) + (1 | sleeper) + (1 | observation),
-    family = binomial, data = df) #,  control =
-#  glmerControl(optimizer = "optimx", calc.derivs = FALSE,
-#               optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
+    family = binomial, data = df) 
 summary(fit)
 
+#Convert to mortality scale
+fit@beta
+coef(summary(fit))["(Intercept)", "Estimate"]
+coef(summary(fit))["treatmentN1u", "Estimate"]
+#InvLogit(coef(summary(fit))["treatmentN1u", "Estimate"])
+InvLogit(coef(summary(fit))["(Intercept)", "Estimate"] + coef(summary(fit))["treatmentN1u", "Estimate"])
+
+#Add confidence intervals
+
+#What if we wanted to group data points by type of insecticide, and ignore washing effects?
 #make new variable
 df$net <- NA
 df[df$treatment=='C',]$net <- 'C'
@@ -133,19 +141,10 @@ fit_n <-
   glmer(
     cbind(tot_dead, total - tot_dead) ~
       net + (1 | hut) + (1 | sleeper) + (1 | observation),
-    family = binomial, data = df) #,  control =
-#  glmerControl(optimizer = "optimx", calc.derivs = FALSE,
-#               optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
+    family = binomial, data = df) 
 summary(fit_n)
 
-#Convert to mortality scale
-fit@beta
-coef(summary(fit))["(Intercept)", "Estimate"]
-coef(summary(fit))["treatmentN1u", "Estimate"]
-#InvLogit(coef(summary(fit))["treatmentN1u", "Estimate"])
-InvLogit(coef(summary(fit))["(Intercept)", "Estimate"] + coef(summary(fit))["treatmentN1u", "Estimate"])
 
-#Add confidence intervals
 
 ###################################################################################
 #######       Section 4. Modelling deterrence                ######################

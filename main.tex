@@ -17,8 +17,22 @@
 
 \maketitle
 
-\section*{A brief intro to R}
-To do. How to load libraries, define a comment, etc.
+\section*{A brief introduction to R}
+
+The most commonly used functions in R are loaded automatically when R (or RStudio) is opened. Additional functions can be found in packages. To use one of these functions, the package must be loaded. For example, to load the \verb+ggplot2+ package, execute this command:
+
+\begin{verbatim}
+> library(ggplot2)
+
+\end{verbatim}
+If an error message is returned, it means that the package isn't installed. The we run:
+
+\begin{verbatim}
+> install.packages(ggplot2)
+\end{verbatim}
+
+The \verb+#+ command in R is used for comments \textit{i.e.} R will ignore anything written after this symbol. This provides a good way to annotate your code.
+
 
 \section{Loading \& summarising a dataset}
 
