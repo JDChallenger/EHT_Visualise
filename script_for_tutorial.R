@@ -10,6 +10,7 @@ library(cowplot)
 library(ggplot2)
 library(dplyr)
 library(reshape2)
+library(fitdistrplus)
 
 # The package GLMMmisc has a non-standard installation. It can be installed by running the following 
 # command (remove the comment symbol '#')
@@ -130,11 +131,14 @@ mortality_conf <- function(mod = fit, i = 1, j = 2){
   #Standard deviation for the difference in the fixed effects
   sigma <- sqrt(vcov(mod)[i,i] + vcov(mod)[j,j] + 
                 2 * rho *(sqrt(vcov(mod)[i,i]) *(sqrt(vcov(mod)[j,j]))))
+  #Extract name(s)
+  nz <- colnames(mod@pp$X)[j]
+  
   central <- mod@beta[i] + mod@beta[j]
   ctl <- round(InvLogit(central),3)
   upp <- round(InvLogit(central + 1.96*sigma),3)
   low <- round(InvLogit(central - 1.96*sigma),3)
-return(paste0(ctl,' [',low,' ,',upp,']'))
+return(paste0(nz,': ',ctl,' [',low,' ,',upp,']'))
 }
 mortality_conf(i = 1, j = 2)
 
@@ -167,6 +171,11 @@ summary(fit_n)
 
 tapply(df$total, df$treatment, mean)
 
+fig.pois <- fitdist(df$total, "pois") # Poisson distr
+plot(fig.pois)
+fig.negbin <- fitdist(df$total, "nbinom") # negative binomial
+plot(fig.negbin)
+
 fit_nb <- glmer.nb(total ~ treatment + (1|sleeper), data = df)
 summary(fit_nb)
 
@@ -180,6 +189,7 @@ coef(summary(fit_nb))["treatmentN1u", "Std. Error"]
 exp(coef(summary(fit_nb))["(Intercept)", "Estimate"] + coef(summary(fit_nb))["treatmentN1u", "Estimate"])
 
 #Percentage deterrence, based on the central estimates
+#TO DO: a function for the deterrence. Can you do all of them at once?
 100*(1-exp(coef(summary(fit_nb))[1,1] + coef(summary(fit_nb))[2,1])/exp(coef(summary(fit_nb))[1,1]))
 
 deterrence_conf <- function(mod= fit_nb, i = 1, j = 2){ 
@@ -187,6 +197,9 @@ deterrence_conf <- function(mod= fit_nb, i = 1, j = 2){
   #Standard deviation for the sum in the fixed effects
   sigmaX <- sqrt(vcov(mod)[i,i] + vcov(mod)[j,j] + 
                  2 * rhoX *(sqrt(vcov(mod)[i,i]) *(sqrt(vcov(mod)[j,j]))))
+  #Extract name(s)
+  nz <- colnames(mod@pp$X)[j]
+  
   #central
   ct <- coef(summary(mod))[i,i] + coef(summary(mod))[j,i]
   ctl <- round(exp(ct),3)
@@ -194,9 +207,13 @@ deterrence_conf <- function(mod= fit_nb, i = 1, j = 2){
   upp <- round(exp(ct + 1.96*sigmaX),3)
   low <- round(exp(ct - 1.96*sigmaX),3)
 
-  return(c(ctl,low,upp))
+  return(paste0(nz,': ',ctl,' [',low,', ',upp,']'))
 }
 deterrence_conf(mod = fit_nb, i = 1, j = 2)
+deterrence_conf(mod = fit_nb, i = 1, j = 2)
+
+t(sapply(2:7, deterrence_conf, i = 1, mod = fit_nb))
+
 
 #Note: we have to use a function from another package (MASS), if we wish to fit a model without random effects
 fit_nb2 <- MASS::glm.nb(total ~ treatment, data=df)

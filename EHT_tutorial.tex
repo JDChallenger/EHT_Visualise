@@ -9,7 +9,7 @@
     \usepackage[margin=1.2in]{geometry}
 %\usepackage[section]{placeins} %prevents figs appearing before the start of the section in which it appears
 
-\title{Supplementary Materials}
+\title{Analysing \& visualising data from experimental hut trials}
 \author{Joe Challenger \& Tom Churcher}
 %\date{February 2020}
 
@@ -36,9 +36,9 @@ The \verb+#+ command in R is used for comments \textit{i.e.} R will ignore anyth
 
 \section{Loading \& summarising a dataset}
 
-In this document, we will demonstrate how to carry out the statistical analyses discussed in the main manuscript. To demonstrate these concepts, we will use a simulated dataset. This dataset has been uploaded with these materials, along with an R script containing the work outlined in this Supplementary file. To run the R script you should download R (link) \& RStudio (link). If you wish to run the script, you should download the ZIP file, and extract the folder. Then, double-click on the project file `XXX.Rproj' to open it in RStudio.
+In this document, we will demonstrate how to carry out the statistical analyses discussed in the main manuscript. To demonstrate these concepts, we will use a simulated dataset. This dataset has been uploaded with these materials, along with an R script containing the work outlined in this Supplementary file. To run the R script you should download R (link) \& RStudio (link). If you wish to run the script, you should download the ZIP file, and extract the folder. Then, double-click on the project file \verb+EHT_Visualise.Rproj+ to open it in RStudio.
 
-Once the project file has been opened, you can then open the R script called `YYY'. The dataset has been stored as an .rds file, and can be loaded using the following command:
+Once the project file has been opened, you can then open the R script called \verb+script_for_tutorial.R+. The dataset has been stored as an .rds file, and can be loaded using the following command:
 %{\tt
 \begin{verbatim}
 > df <- readRDS(`data_for_plot.rds')
