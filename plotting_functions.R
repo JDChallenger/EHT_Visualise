@@ -54,7 +54,7 @@ themeJDC <-
 # (vi) Useful to be able to move pie charts, depending on when the high mosquito numbers occur?
 
 pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
-                  leg_end = 0, legX = 0.8, legY = 0.8, pieX = 0.1, pieY = 0.56){
+                  leg_end = 0, legX = 0.8, legY = 0.8, pie = 1, pieX = 0.1, pieY = 0.56){
   dataCB5 <- dplyr::select(dataa, c('day','treatment','unf_live','unf_dead','bf_live','bf_dead'))
   
   minn <- min(dataCB5$day)
@@ -79,73 +79,77 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
     MH_C <- MH_C + theme(legend.position = c(legX,legY))
   }
   
-  #Pie chart
-  dfc <- data.frame(
-    group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
-    value = c(sum(dataCB5[dataCB5$treatment== arm ,]$unf_dead), 
-              sum(dataCB5[dataCB5$treatment== arm ,]$bf_dead),
-              sum(dataCB5[dataCB5$treatment== arm ,]$unf_live),
-              sum(dataCB5[dataCB5$treatment== arm ,]$bf_live))
-  )
-  head(dfc)
-  dfc$group <- ordered(dfc$group, 
-                       levels = c('Unfed Dead','Fed Dead', 'Unfed Alive','Fed Alive'))
-  #dfC, add percentages?
-  dfc$valuePC <- paste0(round(100*dfc$value/sum(dfc$value)),'%') #set to '' if equal to "0%"?
-  dfc$valuePCr <- 100*dfc$value/sum(dfc$value)
-  #dfc[dfc$valuePC=='0%',]$valuePC <- ''# Only works if true for at least one element
-  dfc$loc <- sum(dfc$value) - cumsum(dfc$value) + 0.5*(dfc$value)
-  dfc$x <- rnorm(dim(dfc)[1],1.2,0.08) #random by default??
-  # dfc[dfc$value==0,]$x <- 1.55
-   dfc$col <- '2'
-  # dfc[dfc$value==0,]$col <- '1'
-   print(dfc)
-   #print(length(which(dfc$valuePCr < 0.5)))
-   if(length(which(dfc$valuePCr < 0.5)) > 0){
-     
-     #print(which(dfc$valuePCr < 1.5))
-     #dfc$col[which(dfc$valuePCr < 0.25)] <- '1'
-     #dfc$x[which(dfc$valuePCr < 1.5)] <- 1.59
-     #trx <- c(cb[5],cb[3],cb[6],cb[4])[which(dfc$valuePCr < 1.5)]
-     dfc$valuePC[which(dfc$valuePCr < 0.5)] <- ""
-     print(dfc)
-     
-     insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
-       geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC +
-       xlab('') + ylab('') +
-       scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
-       theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
-             plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
-       geom_text(aes(x=x,y=loc, label = valuePC), size = 3.4, color = 'white') 
-     #geom_text(aes(x=x,y=loc, label = valuePC, color = factor(col)), size = 3.4) + 
-     #scale_color_manual(values = c(trx,'white'))
+  MH_C_i <- MH_C
+  if(pie == 1){
+    #Pie chart
+    dfc <- data.frame(
+      group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
+      value = c(sum(dataCB5[dataCB5$treatment== arm ,]$unf_dead), 
+                sum(dataCB5[dataCB5$treatment== arm ,]$bf_dead),
+                sum(dataCB5[dataCB5$treatment== arm ,]$unf_live),
+                sum(dataCB5[dataCB5$treatment== arm ,]$bf_live))
+    )
+    head(dfc)
+    dfc$group <- ordered(dfc$group, 
+                         levels = c('Unfed Dead','Fed Dead', 'Unfed Alive','Fed Alive'))
+    #dfC, add percentages?
+    dfc$valuePC <- paste0(round(100*dfc$value/sum(dfc$value)),'%') #set to '' if equal to "0%"?
+    dfc$valuePCr <- 100*dfc$value/sum(dfc$value)
+    #dfc[dfc$valuePC=='0%',]$valuePC <- ''# Only works if true for at least one element
+    dfc$loc <- sum(dfc$value) - cumsum(dfc$value) + 0.5*(dfc$value)
+    dfc$x <- rnorm(dim(dfc)[1],1.2,0.08) #random by default??
+    # dfc[dfc$value==0,]$x <- 1.55
+    dfc$col <- '2'
+    # dfc[dfc$value==0,]$col <- '1'
+    print(dfc)
+    #print(length(which(dfc$valuePCr < 0.5)))
+    if(length(which(dfc$valuePCr < 0.5)) > 0){
+      
+      #print(which(dfc$valuePCr < 1.5))
+      #dfc$col[which(dfc$valuePCr < 0.25)] <- '1'
+      #dfc$x[which(dfc$valuePCr < 1.5)] <- 1.59
+      #trx <- c(cb[5],cb[3],cb[6],cb[4])[which(dfc$valuePCr < 1.5)]
+      dfc$valuePC[which(dfc$valuePCr < 0.5)] <- ""
+      print(dfc)
+      
+      insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC +
+        xlab('') + ylab('') +
+        scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
+        theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
+              plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
+        geom_text(aes(x=x,y=loc, label = valuePC), size = 3.4, color = 'white') 
+      #geom_text(aes(x=x,y=loc, label = valuePC, color = factor(col)), size = 3.4) + 
+      #scale_color_manual(values = c(trx,'white'))
+      
+    }else{
+      insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC + xlab('') + ylab('') +
+        scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
+        theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
+              plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
+        geom_text(aes(x=x,y=loc, label = valuePC), size = 3.4, color = 'white') 
+      
+    }
+    # print(which(dfc$col==1))
+    # trx <- c(cb[5],cb[3],cb[6],cb[4])[which(dfc$col==1)]
     
-   }else{
-     insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
-       geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC + xlab('') + ylab('') +
-       scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
-       theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
-             plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
-       geom_text(aes(x=x,y=loc, label = valuePC), size = 3.4, color = 'white') 
-     
-   }
-  # print(which(dfc$col==1))
-  # trx <- c(cb[5],cb[3],cb[6],cb[4])[which(dfc$col==1)]
-  
-  # insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
-  #   geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC + xlab('') + ylab('') +
-  #   scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
-  #   theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
-  #         plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
-  #   geom_text(aes(x=x,y=loc, label = valuePC), size = 3, color = 'white') 
-  #   #geom_text(aes(x=x,y=loc, label = valuePC, color = factor(col)), size = 3.4) + 
-  #   #scale_color_manual(values = c(trx,'white'))
-  # insetC
-  # 
-  MH_C_i <-
-    ggdraw() +
-     draw_plot(MH_C) +
-     draw_plot(insetC, x = pieX, y = pieY, width = .42, height = .42)
+    # insetC <- ggplot(dfc, aes(x="", y=value, fill=group))+
+    #   geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + themeJDC + xlab('') + ylab('') +
+    #   scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
+    #   theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
+    #         plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
+    #   geom_text(aes(x=x,y=loc, label = valuePC), size = 3, color = 'white') 
+    #   #geom_text(aes(x=x,y=loc, label = valuePC, color = factor(col)), size = 3.4) + 
+    #   #scale_color_manual(values = c(trx,'white'))
+    # insetC
+    # 
+    MH_C_i <-
+      ggdraw() +
+      draw_plot(MH_C) +
+      draw_plot(insetC, x = pieX, y = pieY, width = .42, height = .42)
+    #MH_C_i
+  }
   MH_C_i
 }
 
@@ -276,9 +280,9 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
       # Indent title, to avoid overlap with panel label
       ggtitle('    Blood Fed per feeding attempt') + theme(legend.position = 'bottom', axis.ticks = element_blank(),
                                                            axis.title = element_blank(), axis.text = element_blank()) +
-      annotate('text', x = 1.0, y = 0.2, label = arm_label1, size = sz) + 
-      annotate('text', x = 2.0, y = 0.2, label = arm_label2, size = sz) + 
-      annotate('text', x = 3.0, y = 0.2, label = arm_label3, size = sz) + 
+      annotate('text', x = 1.0, y = 0.1, label = arm_label1, size = sz, hjust = 0) + 
+      annotate('text', x = 2.0, y = 0.1, label = arm_label2, size = sz, hjust = 0) + 
+      annotate('text', x = 3.0, y = 0.1, label = arm_label3, size = sz, hjust = 0) + 
       geom_rect(aes(xmin = 0.55, xmax = 1.45, 
                     ymin = 1 - dfALL[dfALL$net=='C' & dfALL$group=='Fed Alive',]$valuePC2 -
                       dfALL[dfALL$net=='C' & dfALL$group=='Fed Dead',]$valuePC2, ymax = 1.0), alpha = .0, color = 'black') + 
@@ -345,9 +349,9 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
       ggtitle('    Blood Fed per feeding attempt') + theme(legend.position = 'bottom', axis.title.x = element_blank(),
                                                            axis.ticks = element_blank(), axis.text = element_blank())+#,
       #axis.title = element_blank()) +
-      annotate('text', x = 1.0, y = 0.2, label = arm_label1, size = sz) + 
-      annotate('text', x = 2.0, y = 0.2, label = arm_label2, size = sz) + 
-      annotate('text', x = 3.0, y = 0.2, label = arm_label3, size = sz) + xlab('') +
+      annotate('text', x = 1.0, y = 0.1, label = arm_label1, size = sz, hjust = 0) + 
+      annotate('text', x = 2.0, y = 0.1, label = arm_label2, size = sz, hjust = 0) + 
+      annotate('text', x = 3.0, y = 0.1, label = arm_label3, size = sz, hjust = 0) + xlab('') +
       #scale_y_continuous(limits = c(0,6)) +
       geom_rect(aes(xmin = 0.55, xmax = 1.45, 
                     ymin = 1 - dfALL2[dfALL2$net=='C' & dfALL2$group=='Fed Alive',]$valuePC2 -

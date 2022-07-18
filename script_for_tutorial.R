@@ -64,6 +64,7 @@ mx <- max(df[df$treatment=='C'|df$treatment=='N1u'|df$treatment=='N1w',]$total)
 #'arm_title' is the name you want to appear on the plot-- you can choose anything you like!
 #'mx' gives the range of counts that are used for the plot (as above)
 #'pieX' gives the x position of the pie chart. You may wish to move this, if it blocks some of the bars
+#You can add the option 'pie = 0' to generate the plot without the pie chart
 pnel1(dataa = df, arm = 'C', arm_title = 'Control', mx=mx, pieX = 0.15)
 pnel1(dataa = df, arm = 'N1u', arm_title = 'ITN (Unwashed)', mx=mx, pieX = 0.15)
 pnel1(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)', mx=mx, pieX = 0.15)
