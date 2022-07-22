@@ -127,21 +127,56 @@ coef(summary(fit))["treatmentN1u", "Estimate"]
 InvLogit(coef(summary(fit))["(Intercept)", "Estimate"] + coef(summary(fit))["treatmentN1u", "Estimate"])
 
 #Add confidence intervals
-mortality_conf <- function(mod = fit, i = 1, j = 2){
-  rho <- vcov(mod)[i,j]/(sqrt(vcov(mod)[i,i])*sqrt(vcov(mod)[j,j]))
-  #Standard deviation for the difference in the fixed effects
-  sigma <- sqrt(vcov(mod)[i,i] + vcov(mod)[j,j] + 
-                2 * rho *(sqrt(vcov(mod)[i,i]) *(sqrt(vcov(mod)[j,j]))))
-  #Extract name(s)
-  nz <- colnames(mod@pp$X)[j]
+#ADJUST SO THAT IT WORKS FOR INTERCEPT!!
+mortality_conf <- function(mod = fit, j = 2, btz = 0){
+  if(j != 1){
+    rho <- vcov(mod)[1,j]/(sqrt(vcov(mod)[1,1])*sqrt(vcov(mod)[j,j]))
+    #Standard deviation for the difference in the fixed effects
+    sigma <- sqrt(vcov(mod)[1,1] + vcov(mod)[j,j] + 
+                  2 * rho *(sqrt(vcov(mod)[1,1]) *(sqrt(vcov(mod)[j,j]))))
+    #Extract name(s)
+    nz <- colnames(mod@pp$X)[j]
   
-  central <- mod@beta[i] + mod@beta[j]
-  ctl <- round(InvLogit(central),3)
-  upp <- round(InvLogit(central + 1.96*sigma),3)
-  low <- round(InvLogit(central - 1.96*sigma),3)
-return(paste0(nz,': ',ctl,' [',low,' ,',upp,']'))
+    central <- mod@beta[1] + mod@beta[j]
+    ctl <- round(InvLogit(central),3)
+    upp <- round(InvLogit(central + 1.96*sigma),3)
+    low <- round(InvLogit(central - 1.96*sigma),3)
+    if(btz==0){
+      return(paste0(nz,': ',ctl,' [',low,' ,',upp,']'))
+    }else{
+      return(c(ctl,low,upp))
+    }
+  }else{
+    
+    nz <- 'Control'
+    sigma <- sqrt(vcov(mod)[1,1])
+    central <- mod@beta[1]
+    ctl <- round(InvLogit(central),3)
+    upp <- round(InvLogit(central + 1.96*sigma),3)
+    low <- round(InvLogit(central - 1.96*sigma),3)
+    if(btz==0){
+      return(paste0(nz,': ',ctl,' [',low,' ,',upp,']'))
+    }else{
+      return(c(ctl,low,upp))
+    }
+  }
 }
-mortality_conf(i = 1, j = 2)
+mortality_conf(mod = fit, j = 1)
+
+#Make a function that'll work out how many trial arms you have and calculate everything
+mortality_summary <- function(mod = fit){
+  l <- length(mod@beta)
+  dfe <- data.frame('Trial arm' = as.character(),
+                    'Mortality estimate' = as.numeric(),
+                    'Lower 95% CI' = as.numeric(), 'Upper 95% CI' = as.numeric())
+  for(i in 1:l){
+      aux <- mortality_conf(mod = fit, j = i, btz = 1)
+      dfb <- data.frame('Trial arm' = ifelse(i==1,'Control',colnames(mod@pp$X)[i]),
+                    'Mortality estimate' = as.numeric(),
+                    'Lower 95% CI' = as.numeric(), 'Upper 95% CI' = as.numeric())
+    
+  }
+}
 
 #What if we wanted to group data points by type of insecticide, and ignore washing effects?
 #make new variable
