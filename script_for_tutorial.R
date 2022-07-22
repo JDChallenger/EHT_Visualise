@@ -166,18 +166,22 @@ mortality_conf(mod = fit, j = 1)
 #Make a function that'll work out how many trial arms you have and calculate everything
 mortality_summary <- function(mod = fit){
   l <- length(mod@beta)
-  dfe <- data.frame('Trial arm' = as.character(),
-                    'Mortality estimate' = as.numeric(),
-                    'Lower 95% CI' = as.numeric(), 'Upper 95% CI' = as.numeric())
+  dfe <- data.frame('Arm' = as.character(),
+                    'Mortality' = as.numeric(),
+                    'Lower_95pc_CI' = as.numeric(), 'Upper_95pc_CI' = as.numeric())
   for(i in 1:l){
       aux <- mortality_conf(mod = fit, j = i, btz = 1)
-      dfb <- data.frame('Trial arm' = ifelse(i==1,'Control',colnames(mod@pp$X)[i]),
-                    'Mortality estimate' = as.numeric(),
-                    'Lower 95% CI' = as.numeric(), 'Upper 95% CI' = as.numeric())
+      dfb <- data.frame('Arm' = ifelse(i==1,'Control',substring(colnames(mod@pp$X)[i],10)),
+                    'Mortality' = aux[1],
+                    'Lower_95pc_CI' = aux[2], 
+                    'Upper_95pc_CI' = aux[3])
+      dfe <- rbind(dfe,dfb)
     
   }
+  return(dfe)
 }
-
+mortality_summary(mod = fit)
+  
 #What if we wanted to group data points by type of insecticide, and ignore washing effects?
 #make new variable
 df$net <- NA
