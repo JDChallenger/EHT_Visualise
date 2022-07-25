@@ -127,7 +127,6 @@ coef(summary(fit))["treatmentN1u", "Estimate"]
 InvLogit(coef(summary(fit))["(Intercept)", "Estimate"] + coef(summary(fit))["treatmentN1u", "Estimate"])
 
 #Add confidence intervals
-#ADJUST SO THAT IT WORKS FOR INTERCEPT!!
 mortality_conf <- function(mod = fit, j = 2, btz = 0){
   if(j != 1){
     rho <- vcov(mod)[1,j]/(sqrt(vcov(mod)[1,1])*sqrt(vcov(mod)[j,j]))
@@ -232,27 +231,32 @@ exp(coef(summary(fit_nb))["(Intercept)", "Estimate"] + coef(summary(fit_nb))["tr
 #TO DO: a function for the deterrence. Can you do all of them at once?
 100*(1-exp(coef(summary(fit_nb))[1,1] + coef(summary(fit_nb))[2,1])/exp(coef(summary(fit_nb))[1,1]))
 
-deterrence_conf <- function(mod= fit_nb, i = 1, j = 2){ 
-  rhoX <- vcov(mod)[i,j]/(sqrt(vcov(mod)[i,i])*sqrt(vcov(mod)[j,j]))
-  #Standard deviation for the sum in the fixed effects
-  sigmaX <- sqrt(vcov(mod)[i,i] + vcov(mod)[j,j] + 
-                 2 * rhoX *(sqrt(vcov(mod)[i,i]) *(sqrt(vcov(mod)[j,j]))))
-  #Extract name(s)
-  nz <- colnames(mod@pp$X)[j]
-  
-  #central
-  ct <- coef(summary(mod))[i,i] + coef(summary(mod))[j,i]
-  ctl <- round(exp(ct),3)
-  
-  upp <- round(exp(ct + 1.96*sigmaX),3)
-  low <- round(exp(ct - 1.96*sigmaX),3)
-
-  return(paste0(nz,': ',ctl,' [',low,', ',upp,']'))
+#Techincally this isn't deterrence!!
+deterrence_conf <- function(mod= fit_nb, j = 2){ 
+  if(j!=1){
+    rhoX <- vcov(mod)[1,j]/(sqrt(vcov(mod)[1,1])*sqrt(vcov(mod)[j,j]))
+    #Standard deviation for the sum in the fixed effects
+    sigmaX <- sqrt(vcov(mod)[1,1] + vcov(mod)[j,j] + 
+                     2 * rhoX *(sqrt(vcov(mod)[1,1]) *(sqrt(vcov(mod)[j,j]))))
+    #Extract name(s)
+    nz <- colnames(mod@pp$X)[j]
+    
+    #central
+    ct <- coef(summary(mod))[1,1] + coef(summary(mod))[j,1]
+    ctl <- round(exp(ct),3)
+    
+    upp <- round(exp(ct + 1.96*sigmaX),3)
+    low <- round(exp(ct - 1.96*sigmaX),3)
+    
+    return(paste0(nz,': ',ctl,' [',low,', ',upp,']'))
+  }else{
+    print('Deterrence cannot be calculated for the control arm')
+  }
 }
-deterrence_conf(mod = fit_nb, i = 1, j = 2)
-deterrence_conf(mod = fit_nb, i = 1, j = 2)
+deterrence_conf(mod = fit_nb, j = 2)
+deterrence_conf(mod = fit_nb, j = 3)
 
-t(sapply(2:7, deterrence_conf, i = 1, mod = fit_nb))
+sapply(2:7, deterrence_conf, mod = fit_nb)
 
 
 #Note: we have to use a function from another package (MASS), if we wish to fit a model without random effects
