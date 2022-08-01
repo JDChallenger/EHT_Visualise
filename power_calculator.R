@@ -14,16 +14,24 @@ trial <- 1
 #There may be multiple nets in the trial. For superiority or non-inferiority, we need
 #to specify which two arms are of interest (a.o.i)
 
-#Explain these
-aoi1 <- c(4,6)
+#Trial may contain multiple products. We'll need to specify which arms are
+# involved in the hypothesis testing
+aoi1 <- c(4,6) # We'll test whether the latter arm is superior to the former
+# In order, these should be ITN1 (unwashed), ITN1 (washed), ITN2 (unwashed), 
+#ITN2 (washed). We'll test whether ITN2 is superior to ITN1
 aoi2 <- c(4,5,6,7)
-aoi3 <- c(4,6)
+aoi3 <- c(4,6) # We'll test whether the latter arm is non-inferior to the former
+# In order, these should be ITN1 (unwashed), ITN1 (washed), ITN2 (unwashed), 
+#ITN2 (washed). We'll test whether ITN2 is non-inferior to ITN1
 aoi4 <- c(4,5,6,7)
+
+#May need a non-inferiority margin
+NIM <- 0.7
 
 #How many trial arms in total? 
 tt <- 7
 ## How many nights should an ITN stay in a hut before the nets are rotated?
-nn <- 7
+nn <- 6
 
 #assumed mortality in each trial arm (including control)
 mort <- rep(0,tt) #empty list, same length as the number of trial arms
@@ -53,4 +61,49 @@ for(k in 1:(tt-1)){
 }
 aux2
 
+mosdata <-
+  expand.grid(
+    hut = factor(1:ncol(aux2)),
+    week = factor(1:nrow(aux2)),
+    night = factor(1:nn)
+)
+mosdata <- mosdata[order(mosdata$hut, mosdata$week, mosdata$night),]
+
+mosdata$net <- NA
+count <- 1
+for(i in 1:tt){
+  for(j in 1:tt){
+   mosdata$net[((nn*(count-1))+1):(nn*count)]  <- rep(aux2[i,j],nn)
+   count <- count + 1
+  }
+}
+table(mosdata$net, useNA = 'a')
+mosdata$sleeper <- NA
+#mosdata[mosdata$hut==1,]$sleeper <- rep(seq(1,tt),nn)
+
+#mosdata[order(mosdata$week, mosdata$night),]
+
+for(i in 1:tt){
+  print(paste0('Treatment is: ',aux[i]))
+  mosdata2 <- mosdata[mosdata$net==aux[i],]
+  print(table(mosdata2$hut))
+  print(table(mosdata2$sleeper))
+  print(table(mosdata2$week))
+}
+
+mosdata2 <- mosdata[mosdata$hut==2,]
+mosdata2[order(mosdata2$week, mosdata2$night),]
+
+aux3 <- sample(1:7)
+for(i in 1:(tt-1)){
+  aux3 <- rbind(aux3, sample(1:7))
+}
+
+for(j in 1:tt){
+  mosdata[mosdata$hut==j,]$sleeper <- rep(c( aux3[j : tt] , aux3[seq_len(j-1)]  ) ,nn)  
+  #print(c( j : tt , seq_len(j-1)  ) ,nn)
+  print(c( aux3[j : tt] , aux3[seq_len(j-1)]  ))
+  print('/n')
+}
+table(mosdata$sleeper)
 
