@@ -48,6 +48,7 @@ rotations <- 1
 
 #How many mosquitoes per night per hut?
 meanMos <- 11
+dispMos <- 1
 #Should this be constant (det=1), or be sampled from a negative binomial distn (det=0)
 # with the given mean (meanMos)
 det <- 0
@@ -106,3 +107,40 @@ for(i in 1:tt){
   print(table(mosdata2$sleeper))
   print(table(mosdata2$week))
 }
+
+#Now make a unique identifier for each data point
+mosdata$observation <- factor(formatC(1:nrow(mosdata), flag="0", width=3))
+mosdata$sleeper <- factor(mosdata$sleeper)
+mosdata$net <- factor(mosdata$net)
+
+#Are we ready to simulate?
+
+mosdata$n <- NA
+if(det==1){
+  mosdata$n <- meanMos
+}else{
+  l <- dim(mosdata)[1]
+  mosdata$n <- rnbinom(l, mu = meanMos, size = dispMos)
+}
+hist(mosdata$n)
+
+#OR1 <- (0.3/(1-0.3))/(0.05/(1-0.05))
+#OR2 <- (0.4/(1-0.4))/(0.05/(1-0.05))
+or_vec <- (mort[1:tt] / (1-mort[1:tt])) / (mort[1] / (1-mort[1]))
+names(or_vec) <- aux
+
+dfvv <- data.frame(or_vec)
+
+mosdata <- 
+  sim.glmm(design.data = mosdata,
+           fixed.eff = list(
+             intercept = qlogis(mort[1]),
+             net = log(or_vec),  #log(c(C = 1, E1 = OR1, E2 = OR2, E3 = OR2,
+                    #     E4 = OR2, E5 = OR2, E6 = OR2))),
+           rand.V = c(hut = 0.3, sleeper = 0.3, observation = 0.8),
+           distribution = "binomial")
+
+
+
+
+
