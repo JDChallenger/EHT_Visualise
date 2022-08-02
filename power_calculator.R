@@ -135,11 +135,11 @@ mosdata <-
   sim.glmm(design.data = mosdata,
            fixed.eff = list(
              intercept = qlogis(mort[1]),
-             net = log(or_vec),  #log(c(C = 1, E1 = OR1, E2 = OR2, E3 = OR2,
+             net = log(or_vec)),  #log(c(C = 1, E1 = OR1, E2 = OR2, E3 = OR2,
                     #     E4 = OR2, E5 = OR2, E6 = OR2))),
            rand.V = c(hut = 0.3, sleeper = 0.3, observation = 0.8),
            distribution = "binomial")
-
+#Test that this works..
 
 
 
