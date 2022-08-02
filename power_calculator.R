@@ -83,6 +83,22 @@ mosdata$sleeper <- NA
 
 #mosdata[order(mosdata$week, mosdata$night),]
 
+#mosdata2 <- mosdata[mosdata$hut==2,]
+#mosdata2[order(mosdata2$week, mosdata2$night),]
+
+aux3 <- sample(1:7)
+# for(i in 1:(tt-1)){
+#   aux3 <- rbind(aux3, sample(1:7))
+# }
+
+for(j in 1:tt){
+  mosdata[mosdata$hut==j,]$sleeper <- rep(c(aux3[seq_len(j-1)], aux3[j : tt]  ) ,nn)  
+  #print(c( j : tt , seq_len(j-1)  ) ,nn)
+  print(c( aux3[j : tt] , aux3[seq_len(j-1)]  ))
+  print('/n')
+}
+table(mosdata$sleeper)
+
 for(i in 1:tt){
   print(paste0('Treatment is: ',aux[i]))
   mosdata2 <- mosdata[mosdata$net==aux[i],]
@@ -90,20 +106,3 @@ for(i in 1:tt){
   print(table(mosdata2$sleeper))
   print(table(mosdata2$week))
 }
-
-mosdata2 <- mosdata[mosdata$hut==2,]
-mosdata2[order(mosdata2$week, mosdata2$night),]
-
-aux3 <- sample(1:7)
-for(i in 1:(tt-1)){
-  aux3 <- rbind(aux3, sample(1:7))
-}
-
-for(j in 1:tt){
-  mosdata[mosdata$hut==j,]$sleeper <- rep(c( aux3[j : tt] , aux3[seq_len(j-1)]  ) ,nn)  
-  #print(c( j : tt , seq_len(j-1)  ) ,nn)
-  print(c( aux3[j : tt] , aux3[seq_len(j-1)]  ))
-  print('/n')
-}
-table(mosdata$sleeper)
-
