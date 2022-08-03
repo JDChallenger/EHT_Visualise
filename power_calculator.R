@@ -1,4 +1,11 @@
-#
+library(lme4)
+#devtools::install_github("pcdjohnson/GLMMmisc")
+library(GLMMmisc)
+
+#user-defined function, to convert from log-odds scale to probability scale
+InvLogit <- function(X){
+  exp(X)/(1+exp(X))
+}
 
 # What type of trial is it? superiority trial (trial=1); non-inferiority trial (trial=2)
 #Or extend =3 & =4 to say whether washed & unwashed nets should be combined
@@ -141,6 +148,124 @@ mosdata <-
            distribution = "binomial")
 #Test that this works..
 
+fit_model <-
+  glmer(
+    cbind(response, n - response) ~
+      net + (1 | hut) + (1 | sleeper) + (1 | observation),
+    family = binomial, data = mosdata)
+summary(fit_model)
+fit_model@beta
+InvLogit(fit_model@beta[1] + fit_model@beta[2:7])
+mort[2:7]
+
+# 1. Superiority, between two arms
+
+levels(mosdata$net)
+#relevel
+mosdata$net <- relevel(mosdata$net,aux[4]) #write using aoi1
+levels(mosdata$net)
+
+fit_model <-
+  glmer(
+    cbind(response, n - response) ~
+      net + (1 | hut) + (1 | sleeper) + (1 | observation),
+    family = binomial, data = mosdata)
+summary(fit_model)
+
+labl <- paste0('net',aux[6])
+
+if(coef(summary(fit_model))[labl, "Pr(>|z|)"] <0.05 & 
+   coef(summary(fit_model))[labl,"Estimate"]>0){
+  1
+}else{
+  0
+}
+
+# 2. Combine nets before assessing
+mosdata2 <- mosdata
+mosdata2$net[mosdata2$net ==  aux[aoi2[2]] ] <- aux[aoi2[1]]
+mosdata2$net[mosdata2$net ==  aux[aoi2[4]] ] <-  aux[aoi2[3]]
+table(mosdata2$net)
+
+mosdata2$net <- relevel(mosdata2$net,aux[aoi2[1]]) #write using aoi1
+levels(mosdata2$net)
+
+fit_model <-
+  glmer(
+    cbind(response, n - response) ~
+      net + (1 | hut) + (1 | sleeper) + (1 | observation),
+    family = binomial, data = mosdata2)
+summary(fit_model)
+
+labl <- paste0('net',aux[aoi2[3]])
+
+if(coef(summary(fit_model))[labl, "Pr(>|z|)"] <0.05 & 
+   coef(summary(fit_model))[labl,"Estimate"]>0){
+  1
+}else{
+  0
+}
+
+# 3. Non-inferiority between two arms
+
+aoi3
+
+#check the levels
+levels(mosdata$net)
+#relevel
+mosdata$net <- relevel(mosdata$net,aux[aoi3[1]]) 
+#check the levels again
+levels(mosdata$net)
+
+fit_n <-
+  glmer(
+    cbind(response, n - response) ~
+      net + (1 | hut) + (1 | sleeper) + (1 | observation),
+    family = binomial, data = mosdata) 
+summary(fit_n)
+
+labl <- paste0('net', aux[aoi3[2]])
+
+exp(coef(summary(fit_n))[labl,'Estimate'])
+exp(coef(summary(fit_n))[labl,'Estimate'] - 1.96*coef(summary(fit_n))[labl,'Std. Error'])
+exp(coef(summary(fit_n))[labl,'Estimate'] + 1.96*coef(summary(fit_n))[labl,'Std. Error'])
+
+if(exp(coef(summary(fit_n))[labl,'Estimate'] -
+       1.96*coef(summary(fit_n))[labl,'Std. Error']) > NIM){
+  1
+}else{
+  0
+}
+
+# 3. Non-inferiority between two ITNs (combine unwashed & washed nets)
+aoi4
+
+mosdata2 <- mosdata
+mosdata2$net[mosdata2$net ==  aux[aoi4[2]] ] <- aux[aoi4[1]]
+mosdata2$net[mosdata2$net ==  aux[aoi4[4]] ] <-  aux[aoi4[3]]
+table(mosdata2$net)
+
+mosdata2$net <- relevel(mosdata2$net, aux[aoi4[1]]) #write using aoi4
+levels(mosdata2$net)
+
+fit_n <-
+  glmer(
+    cbind(response, n - response) ~
+      net + (1 | hut) + (1 | sleeper) + (1 | observation),
+    family = binomial, data = mosdata2)
+summary(fit_n)
+
+labl <- paste0('net',aux[aoi2[3]])
+exp(coef(summary(fit_n))[labl,'Estimate'])
+exp(coef(summary(fit_n))[labl,'Estimate'] - 1.96*coef(summary(fit_n))[labl,'Std. Error'])
+exp(coef(summary(fit_n))[labl,'Estimate'] + 1.96*coef(summary(fit_n))[labl,'Std. Error'])
+
+if(exp(coef(summary(fit_n))[labl,'Estimate'] -
+       1.96*coef(summary(fit_n))[labl,'Std. Error']) > NIM){
+  1
+}else{
+  0
+}
 
 
 
