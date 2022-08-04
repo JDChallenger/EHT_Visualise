@@ -187,7 +187,7 @@ mosdata2$net[mosdata2$net ==  aux[aoi2[2]] ] <- aux[aoi2[1]]
 mosdata2$net[mosdata2$net ==  aux[aoi2[4]] ] <-  aux[aoi2[3]]
 table(mosdata2$net)
 
-mosdata2$net <- relevel(mosdata2$net,aux[aoi2[1]]) #write using aoi1
+mosdata2$net <- relevel(mosdata2$net,aux[aoi2[1]]) 
 levels(mosdata2$net)
 
 fit_model <-
@@ -237,7 +237,7 @@ if(exp(coef(summary(fit_n))[labl,'Estimate'] -
   0
 }
 
-# 3. Non-inferiority between two ITNs (combine unwashed & washed nets)
+# 4. Non-inferiority between two ITNs (combine unwashed & washed nets)
 aoi4
 
 mosdata2 <- mosdata
@@ -255,7 +255,7 @@ fit_n <-
     family = binomial, data = mosdata2)
 summary(fit_n)
 
-labl <- paste0('net',aux[aoi2[3]])
+labl <- paste0('net',aux[aoi4[3]])
 exp(coef(summary(fit_n))[labl,'Estimate'])
 exp(coef(summary(fit_n))[labl,'Estimate'] - 1.96*coef(summary(fit_n))[labl,'Std. Error'])
 exp(coef(summary(fit_n))[labl,'Estimate'] + 1.96*coef(summary(fit_n))[labl,'Std. Error'])
