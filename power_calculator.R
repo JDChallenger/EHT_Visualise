@@ -136,7 +136,7 @@ hist(mosdata$n)
 or_vec <- (mort[1:tt] / (1-mort[1:tt])) / (mort[1] / (1-mort[1]))
 names(or_vec) <- aux
 
-dfvv <- data.frame(or_vec)
+#dfvv <- data.frame(or_vec)
 
 mosdata <- 
   sim.glmm(design.data = mosdata,
