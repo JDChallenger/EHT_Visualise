@@ -300,7 +300,7 @@ print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%, 95% CI: [',
              round(binom.test(table(factor(mm,c(1,0))))$conf.int[2],3),']'))
 
 #############################################################
-# Parallise code (Windows version)
+# Parallise code (Windows version) -- should be checked..
 # ncores <- detectCores() - 1
 # cl <- makeCluster(ncores)
 # clusterExport(cl,'hypothesis_test')

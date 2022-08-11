@@ -169,7 +169,8 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
 
 #hut_info <- 1
 
-error_bar_prop <- function(dataa = df, arm = 'C', arm_title = 'Control', hut_info = 1){
+error_bar_prop <- function(dataa = df, arm = 'C', arm_title = 'Control',
+                           hut_info = 1, leg_end = 0){
   dataa$prop <- dataa$tot_dead / dataa$total
   dataa$ci1 <- 0
   dataa$ci2 <- 0
@@ -181,24 +182,31 @@ error_bar_prop <- function(dataa = df, arm = 'C', arm_title = 'Control', hut_inf
       #dataa$sd <- dataa$total[i] * dataa$prop * (1 - dataa$prop) #mmm think this is variance??
     }
   }
+  if(leg_end==1){
+    strr <- 'bottom'
+  }else{
+    strr <- 'none'
+  }
+  
   minn <- min(dataa$day)
   maxx <- max(dataa$day)
   if(hut_info==1){
     ggplot() + geom_errorbar(data = dataa[dataa$treatment== arm ,],
                              aes(x=day, y = prop, ymin = ci1, ymax = ci2), alpha = .35, width = 0) +
       geom_point(data = dataa[dataa$treatment== arm ,], 
-                 aes(x=day, y = prop, size=total, color = factor(hut))) + #guides(size=FALSE) +
-      ylab("Proportion of mosquitoes killed") + ggtitle( arm_title) +
+                 aes(x=day, y = prop, size=total, color = factor(hut))) + 
+      guides(size='none', col = guide_legend(nrow = 1, byrow = TRUE)) +
+      ylab("Proportion of mosquitoes killed") + ggtitle( arm_title) + labs(color='Hut') + 
       xlab("Study Day") + themeJDC + scale_y_continuous(breaks=c(0,.5,1)) + # + labs(color = "Hut")
-      theme(legend.position = 'none') + scale_x_continuous(limits = c(minn,maxx))
+      theme(legend.position = strr) + scale_x_continuous(limits = c(minn,maxx))
   }else{
     ggplot() + geom_errorbar(data = dataa[dataa$treatment== arm ,],
                              aes(x=day, y = prop, ymin = ci1, ymax = ci2), alpha = .35, width = 0) +
       geom_point(data = dataa[dataa$treatment== arm ,], 
-                 aes(x=day, y = prop, size=total), color = 'magenta') + #guides(size=FALSE) +
+                 aes(x=day, y = prop, size=total), color = 'magenta') + guides(size='none') +
       ylab("Proportion of mosquitoes killed") + ggtitle( arm_title) +
       xlab("Study Day") + themeJDC + scale_y_continuous(breaks=c(0,.5,1)) + # + labs(color = "Hut")
-      theme(legend.position = 'none') + scale_x_continuous(limits = c(minn,maxx))
+      theme(legend.position = strr) + scale_x_continuous(limits = c(minn,maxx))
   }
 }
 #error_bar_prop(dataa = df, arm = 'N1u', arm_title = 'ITN (Unwashed)')

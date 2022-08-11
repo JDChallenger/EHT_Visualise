@@ -73,6 +73,7 @@ pnel1(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)', mx=mx, pieX = 0.15)
 #'arm' and 'arm_title' are defined as above
 #By default, the data points will be coloured per hut. If you don't have hut information 
 #you can turn this off by setting hut_info = 0
+#A legend for 'hut' can be added with the option 'leg_end=1'
 error_bar_prop(dataa = df, arm = 'N1u', arm_title = 'ITN (Unwashed)', hut_info = 1)
 error_bar_prop(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)', hut_info = 1)
 
