@@ -3,43 +3,12 @@ library(lme4)
 library(GLMMmisc)
 library("optimx") #Standard installation??
 library(ggplot2)
+library(parallel)
 
 #user-defined function, to convert from log-odds scale to probability scale
 InvLogit <- function(X){
   exp(X)/(1+exp(X))
 }
-
-#####################################################
-# 1. Info required
-
-#How many trial arms in total? 
-tt <- 7
-## How many nights should an ITN stay in a hut before the nets are rotated?
-nn <- 6 #Must be less than or equal to number of trial arms
-
-#assumed mortality in each trial arm (including control)
-mort <- rep(0,tt) #empty list, same length as the number of trial arms
-#Fill in your own values!
-mort <- c(0.04, 0.25, 0.15, 0.35, 0.25, 0.35, 0.25)
-
-#Do we require that the number of trial arms equal the number of huts/sleepers? Say 'yes'
-
-
-#Length of trial. 
-#Described in terms of number of complete rotations of the LSD, 
-#Needs to be at least 1 at the moment, but you can enter things like '1.25' or '1.5'
-#If you are hoping not to need a full 2nd rotation
-rotations <- 1 #What happens if rotation > 2??
-# if(rotations<1){
-#   rotations <- 1
-# }
-
-#How many mosquitoes per night per hut?
-meanMos <- 11
-dispMos <- 1
-#Should this be constant (det=1), or be sampled from a negative binomial distn (det=0)
-# with the given mean (meanMos)
-det <- 0
 
 simulate_trial <- function(n_arms, npw, mos_det = 0, meanMos = 10, dispMos = 1,
                            rotations = 1, mortalities, varH = 0, varS = 0, varO = 0.8){
@@ -94,7 +63,7 @@ simulate_trial <- function(n_arms, npw, mos_det = 0, meanMos = 10, dispMos = 1,
   
   for(j in 1:n_arms){
     mosdata[mosdata$hut==j,]$sleeper <- 
-                        rep(c(aux3[seq_len(j-1)], aux3[j : n_arms]  ) ,npw)  
+      rep(c(aux3[seq_len(j-1)], aux3[j : n_arms]  ) ,npw)  
   }
   #table(mosdata$sleeper)
   for(i in 1:n_arms){
@@ -170,15 +139,15 @@ simulate_trial <- function(n_arms, npw, mos_det = 0, meanMos = 10, dispMos = 1,
   
 }
 #test
-xc <- simulate_trial(n_arms = 7, npw = 5, mortalities = c(0.04, 0.3,0.2, 0.3,0.2, 0.3,0.2),
-               varH=0.1, varS = 0.2, varO = 1)
-dim(xc)
-head(xc)
-table(xc$net)
-table(xc$hut)
-table(xc$sleeper)
+# xc <- simulate_trial(n_arms = 7, npw = 5, mortalities = c(0.04, 0.3,0.2, 0.3,0.2, 0.3,0.2),
+#                varH=0.1, varS = 0.2, varO = 1)
+# dim(xc)
+# head(xc)
+# table(xc$net)
+# table(xc$hut)
+# table(xc$sleeper)
 
-hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){ #add dataframe
+hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){ 
   count <- 0
   
   l <- length(unique(dataset$net))
@@ -326,75 +295,77 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){ #add dataframe
   return('All quiet?')
 }
 #test
-hypothesis_test(trial = 1, aoi = c(3,4), dataset = xc)
+#hypothesis_test(trial = 1, aoi = c(3,4), dataset = xc)
 #Is this ok?
-hypothesis_test(trial = 1, aoi = c(4,6), 
-                dataset = simulate_trial(n_arms = 7, npw = 7, 
-                                mortalities = c(0.04, 0.3,0.2,0.4,0.34,0.45,0.34),
-                                         varH=0.1, varS = 0.2, varO = 1))
+#hypothesis_test(trial = 1, aoi = c(4,6), 
+#                dataset = simulate_trial(n_arms = 7, npw = 7, 
+#                                mortalities = c(0.04, 0.3,0.2,0.4,0.34,0.45,0.34),
+#                                         varH=0.1, varS = 0.2, varO = 1))
 
 #############################################################
 # Parallise code (Mac version)
-library(parallel)
-nsim <- 100
-ncores <- detectCores() - 1
-t1 <- Sys.time()
-sz <- mclapply(1:nsim,  function(...) hypothesis_test(trial = 1, aoi = c(4,6), 
-                        dataset = simulate_trial(n_arms = 7, npw = 5, rotations = 1, 
-                           mortalities = c(0.04, 0.3,0.2,0.4,0.2,0.49,0.34),
-                               varH=0.1, varS = 0.2, varO = .5)))
-t2 <- Sys.time()
-t2 - t1
-mm <- unlist(sz)
-mean(mm)
+# library(parallel)
+# nsim <- 100
+# ncores <- detectCores() - 1
+# t1 <- Sys.time()
+# sz <- mclapply(1:nsim, function(...) hypothesis_test(trial = 1, aoi = c(4,6), 
+#                         dataset = simulate_trial(n_arms = 7, npw = 5, rotations = 1, 
+#                            mortalities = c(0.04, 0.3,0.2,0.4,0.2,0.49,0.34),
+#                                varH=0.1, varS = 0.2, varO = .5)))
+# t2 <- Sys.time()
+# t2 - t1
+# mm <- unlist(sz)
+# mean(mm)
+# 
+# print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%'))
+# #binom.test(table(factor(sim.pvals < 0.05, c(T, F))))$conf.int
+# #How many simulations is enough? Depends how much precision you need. 
+# #Let's look at the 95% CIs for the power estiamte
+# binom.test(table(factor(mm,c(1,0))))$conf.int
+# #Put all that together
+# print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%, 95% CI: [',
+#              round(binom.test(table(factor(mm,c(1,0))))$conf.int[1],3),',',
+#              round(binom.test(table(factor(mm,c(1,0))))$conf.int[2],3),']'))
 
-print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%'))
-#binom.test(table(factor(sim.pvals < 0.05, c(T, F))))$conf.int
-#How many simulations is enough? Depends how much precision you need. 
-#Let's look at the 95% CIs for the power estiamte
-binom.test(table(factor(mm,c(1,0))))$conf.int
-#Put all that together
-print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%, 95% CI: [',
-             round(binom.test(table(factor(mm,c(1,0))))$conf.int[1],3),',',
-             round(binom.test(table(factor(mm,c(1,0))))$conf.int[2],3),']'))
-
-lazy <- function(npw1 = 6, rotations1 = 1, varO1 = 1, nsim1 = 1000, trialX = 1,
-                 aoiX = c(4,6), n_armsX = 7, mortalitiesX = c(0.04, 0.3,0.2,0.4,0.2,0.5,0.34)){
+#nc <- detectCores() - 1
+lazy <- function(trialX = 1, npw1 = 6, rotations1 = 1, varO1 = 1, 
+                 nsim1 = 1000, n_armsX = 7, mos_detX = 0, meanMosX = 10, dispMosX = 1,
+                 aoiX = c(4,6), mortalitiesX = c(0.04, 0.3,0.2,0.4,0.2,0.5,0.34)){
   nsim <- nsim1
   ncores <- detectCores() - 1
   #t1 <- Sys.time()
-  sz <- mclapply(1:nsim, mc.cores = ncores,  function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
-                                                       dataset = simulate_trial(n_arms = n_armsX,
-                                                                                npw = npw1, rotations = rotations1, 
-                                                                                mortalities = mortalitiesX,
-                                                                                varH=0.1, varS = 0.2, varO = varO1)))
+  sz <- mclapply(1:nsim1, function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
+                                          dataset = simulate_trial(n_arms = n_armsX, npw = npw1, 
+                                rotations = rotations1, mos_det = mos_detX, meanMos = meanMosX, 
+                                          dispMos = dispMosX, mortalities = mortalitiesX,
+                                              varH=0.1, varS = 0.2, varO = varO1)))
   #t2 <- Sys.time()
   #t2 - t1
   mm <- unlist(sz)
   print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%, 95% CI: [',
-               round(binom.test(table(factor(mm,c(1,0))))$conf.int[1],3),',',
-               round(binom.test(table(factor(mm,c(1,0))))$conf.int[2],3),']'))
-  return(c(100*sum(mm)/length(mm),binom.test(table(factor(mm,c(1,0))))$conf.int[1],
-           binom.test(table(factor(mm,c(1,0))))$conf.int[2]))
+               100*round(binom.test(table(factor(mm,c(1,0))))$conf.int[1],3),',',
+               100*round(binom.test(table(factor(mm,c(1,0))))$conf.int[2],3),']'))
+  return(c(100*sum(mm)/length(mm),100*binom.test(table(factor(mm,c(1,0))))$conf.int[1],
+           100*binom.test(table(factor(mm,c(1,0))))$conf.int[2]))
 }
-lazy(nsim1=111)
+#lazy(nsim1 = 111)
 
-storeR <- seq(1,2.25,0.25)
-store1 <- storeR
-store2 <- storeR
-store3 <- storeR
-for(i in 1:(length(storeR))){
-  xx <- lazy(rotations1 = storeR[i])
-  store1[i] <- xx[1]
-  store2[i] <- xx[2]
-  store3[i] <- xx[3]
-  print(i)
-}
-dfs <- data.frame('rotations' = storeR, 'power' = store1, 'ci1' = store2,
-                  'ci2' = store3)
-ggplot(dfs) + geom_point(aes(x=rotations,y=power)) + 
-  geom_line(aes(x=rotations,y=power)) + theme_classic() +
-  geom_errorbar(aes(x=rotations, ymin = 100*ci1, ymax = 100*ci2))
+# storeR <- seq(1,2.25,0.25)
+# store1 <- storeR
+# store2 <- storeR
+# store3 <- storeR
+# for(i in 1:(length(storeR))){
+#   xx <- lazy(rotations1 = storeR[i])
+#   store1[i] <- xx[1]
+#   store2[i] <- xx[2]
+#   store3[i] <- xx[3]
+#   print(i)
+# }
+# dfs <- data.frame('rotations' = storeR, 'power' = store1, 'ci1' = store2,
+#                   'ci2' = store3)
+# ggplot(dfs) + geom_point(aes(x=rotations,y=power)) + 
+#   geom_line(aes(x=rotations,y=power)) + theme_classic() +
+#   geom_errorbar(aes(x=rotations, ymin = 100*ci1, ymax = 100*ci2))
 
 #############################################################
 # Parallise code (Windows version) -- should be checked..
