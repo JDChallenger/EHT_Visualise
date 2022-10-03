@@ -119,6 +119,7 @@ fit <-
     family = binomial, data = df) 
 summary(fit)
 
+#Here are a couple of ways to extract parameter values from the fitted model
 fit@beta
 coef(summary(fit))["(Intercept)", "Estimate"]
 coef(summary(fit))["treatmentN1u", "Estimate"]
@@ -164,14 +165,15 @@ mortality_conf <- function(mod = fit, j = 2, btz = 0){
 mortality_conf(mod = fit, j = 1)
 
 #Make a function that'll work out how many trial arms you have and calculate everything
-mortality_summary <- function(mod = fit){
-  l <- length(mod@beta)
+mortality_summary <- function(modX){
+  l <- length(modX@beta)
   dfe <- data.frame('Arm' = as.character(),
                     'Mortality' = as.numeric(),
                     'Lower_95pc_CI' = as.numeric(), 'Upper_95pc_CI' = as.numeric())
   for(i in 1:l){
-      aux <- mortality_conf(mod = fit, j = i, btz = 1)
-      dfb <- data.frame('Arm' = ifelse(i==1,'Control',substring(colnames(mod@pp$X)[i],10)),
+      aux <- mortality_conf(mod = modX, j = i, btz = 1)
+      dfb <- #data.frame('Arm' = ifelse(i==1,'Control',substring(colnames(modX@pp$X)[i],10)),
+        data.frame('Arm' = ifelse(i==1,'Control',colnames(modX@pp$X)[i]),
                     'Mortality' = aux[1],
                     'Lower_95pc_CI' = aux[2], 
                     'Upper_95pc_CI' = aux[3])
@@ -180,7 +182,7 @@ mortality_summary <- function(mod = fit){
   }
   return(dfe)
 }
-mortality_summary(mod = fit)
+mortality_summary(modX = fit)
   
 #What if we wanted to group data points by type of insecticide, and ignore washing effects?
 #make new variable
@@ -200,6 +202,7 @@ fit_n <-
       net + (1 | hut) + (1 | sleeper) + (1 | observation),
     family = binomial, data = df) 
 summary(fit_n)
+mortality_summary(modX = fit_n)
 
 #Task: what is the estimated mortality due to net 'N1'? 
 
