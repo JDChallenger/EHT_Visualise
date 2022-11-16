@@ -232,7 +232,8 @@ error_bar_prop <- function(dataa = df, arm = 'C', arm_title = 'Control',
 # (iii) Code in the function is v messy, I need to tidy!
 
 bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
-                arm_label1 = 'Control', arm_label2 = 'ITN Unwashed', arm_label3 = 'ITN Washed'){
+                arm_label1 = 'Control', arm_label2 = 'ITN Unwashed',
+                arm_label3 = 'ITN Washed', text_size = 4.9){
   if(deterr==0){
     #dfc dfVw, dfVu
     #
@@ -242,11 +243,7 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
                 sum(dataa[dataa$treatment==arm1,]$unf_live), sum(dataa[dataa$treatment==arm1,]$bf_live))
     )
     head(dfc)
-    dfc$group <- ordered(dfc$group, 
-                         levels = c('Unfed Dead','Fed Dead', 'Unfed Alive','Fed Alive'))
-    #add percentages?
-    dfc$valuePC <- paste0(round(100*dfc$value/sum(dfc$value)),'%') #set to '' if equal to "0%"?
-    dfc$loc <- sum(dfc$value) - cumsum(dfc$value) + 0.67*(dfc$value)
+
     #
     dfVu <- data.frame(
       group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
@@ -282,8 +279,9 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     dfALL$group <- ordered(dfALL$group, 
                            levels = c('Fed Alive','Fed Dead','Unfed Dead','Unfed Alive'))
     #print(dfALL)
-    sz <- 4.9 #text size of labels
-    bfi_plot <- ggplot(dfALL, aes(x=net, fill = group, y=valuePC2)) + geom_bar(position="stack", stat="identity") + 
+    sz <- text_size #text size of labels
+    bfi_plot <- ggplot(dfALL, aes(x=net, fill = group, y=valuePC2)) + 
+      geom_bar(position="stack", stat="identity") + 
       scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6])) + themeJDC + coord_flip() + 
       # Indent title, to avoid overlap with panel label
       ggtitle('    Blood Fed per feeding attempt') + theme(legend.position = 'bottom', axis.ticks = element_blank(),
@@ -349,7 +347,7 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     dfALL2$group <- ordered(dfALL2$group, 
                             levels = c('Fed Alive','Fed Dead','Unfed Dead','Unfed Alive','Deterred'))
     #print(dfALL2)
-    sz <- 4.9 #text size of labels
+    sz <- text_size #text size of labels
     bfi_plot2 <- ggplot(dfALL2, aes(x=net, fill = group, y=valuePC2)) + geom_bar(position="stack", stat="identity") + 
       scale_fill_manual(name = '', values = c(cb[4],cb[3],cb[5],cb[6],cb[7]), guide = guide_legend(reverse = TRUE)) +
       themeJDC + coord_flip() + 
@@ -388,6 +386,103 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
 #bfi()
 #Note how the percentages change, once deterrence is turned on (denominator changes)
 #bfi(deterr = 1)
+
+net_names <- unique(df$treatment)
+net_names <- c('Untreated Net', 'ITN1 (Unwashed)','ITN1 (Washed)','ITN2 (Unwashed)',
+               'ITN2 (Washed)','ITN3 (Unwashed)', 'ITN3 (Washed)')
+#arm_labels <- net_names
+
+bfi_all_arms <- function(dataa = df, deterr = 0,
+                arm_labels = net_names, text_size = 4.9){
+
+  if(deterr==0){
+    lu <- unique(dataa$treatment)
+    l <- length(lu)
+    aux <- data.frame('group' = as.character(), 'value'=as.integer(),
+                      'net' = as.character(), 'PC2' = as.numeric())
+    for(i in 1:l){
+      dfc <- data.frame(
+        group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
+        value = c(sum(dataa[dataa$treatment==lu[i],]$unf_dead), 
+                  sum(dataa[dataa$treatment==lu[i],]$bf_dead),
+                  sum(dataa[dataa$treatment==lu[i],]$unf_live), 
+                  sum(dataa[dataa$treatment==lu[i],]$bf_live))
+      )
+      dfc$net <- lu[i]
+      dfc$valuePC2 <- dfc$value / sum(dfc$value)
+      aux <- rbind(aux, dfc)
+    }
+    print(aux)
+    bf <- rep(0,l)
+    for(i in 1:l){
+      bf[i] <- aux[aux$net==lu[i] & aux$group=='Fed Alive',]$valuePC2 + 
+        aux[aux$net==lu[i] & aux$group=='Fed Dead',]$valuePC2
+    }
+    bfc <- paste0(round(100*bf),'%')
+    aux$group <- ordered(aux$group, 
+                           levels = c('Fed Alive','Fed Dead','Unfed Dead','Unfed Alive'))
+    sz <- text_size #text size of labels
+    bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=net, fill = group, y=valuePC2),
+                                    position="stack", stat="identity") + 
+      scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6])) +
+      themeJDC + coord_flip() + theme(legend.position = 'bottom',
+        axis.title = element_blank(), axis.ticks = element_blank(),
+        axis.text = element_blank()) + ggtitle('    Blood Fed per feeding attempt') +      
+      geom_text(data = data.frame(lb = arm_labels, loc = seq(1,l,1)),
+                aes(y=0.1,x=loc,label = lb), size = sz, hjust = 0) + 
+      geom_rect(data = data.frame(x1 = seq(0.55,0.55+l-1,1), x2 = seq(1.45,1.45+l-1,1),
+                   y1 = 1 - bf, y2 = 1), aes(xmin = x1, xmax = x2, ymin = y1, ymax = y2),
+                color = 'black', fill = NA) + 
+      geom_text(data = data.frame(lbl = bfc, bf=bf), aes(x=seq(1,l,1),#y=1-0.5*bf,
+                                  y = 1-0.5*min(bf), label=bfc), size = sz)
+    return(bfi_plot)
+    
+  }else{
+    lu <- unique(dataa$treatment)
+    l <- length(lu)
+    aux <- data.frame('group' = as.character(), 'value'=as.integer(),
+                      'net' = as.character(), 'PC2' = as.numeric())
+    for(i in 1:l){
+      dfc <- data.frame(
+        group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive","Deterred"),
+        value = c(sum(dataa[dataa$treatment==lu[i],]$unf_dead), 
+                  sum(dataa[dataa$treatment==lu[i],]$bf_dead),
+                  sum(dataa[dataa$treatment==lu[i],]$unf_live), 
+                  sum(dataa[dataa$treatment==lu[i],]$bf_live),
+                  sum(dataa[dataa$treatment==lu[1],]$total) - 
+                    sum(dataa[dataa$treatment==lu[i],]$total))
+      )
+      dfc$net <- lu[i]
+      dfc$valuePC2 <- dfc$value / sum(dfc$value)
+      aux <- rbind(aux, dfc)
+      }
+      bf <- rep(0,l)
+      for(i in 1:l){
+        bf[i] <- aux[aux$net==lu[i] & aux$group=='Fed Alive',]$valuePC2 + 
+          aux[aux$net==lu[i] & aux$group=='Fed Dead',]$valuePC2
+      }
+      bfc <- paste0(round(100*bf),'%')
+      aux$group <- ordered(aux$group, 
+                         levels = c('Fed Alive','Fed Dead','Unfed Dead','Unfed Alive','Deterred'))
+      sz <- text_size
+      bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=net, fill = group, y=valuePC2),
+                                      position="stack", stat="identity") + 
+        scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6],cb[7])) +
+        themeJDC + coord_flip() + theme(legend.position = 'bottom',
+                                        axis.title = element_blank(), axis.ticks = element_blank(),
+                                        axis.text = element_blank()) + ggtitle('    Blood Fed per feeding attempt') +      
+        geom_text(data = data.frame(lb = arm_labels, loc = seq(1,l,1)),
+                  aes(y=0.1,x=loc,label = lb), size = sz, hjust = 0) + 
+        geom_rect(data = data.frame(x1 = seq(0.55,0.55+l-1,1), x2 = seq(1.45,1.45+l-1,1),
+                                    y1 = 1 - bf, y2 = 1), aes(xmin = x1, xmax = x2, ymin = y1, ymax = y2),
+                  color = 'black', fill = NA) + 
+        geom_text(data = data.frame(lbl = bfc, bf=bf), aes(x=seq(1,l,1),#y=1-0.5*bf,
+                                                           y = 1-0.5*min(bf), label=bfc), size = sz)
+        return(bfi_plot)
+    }
+}
+bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names)  
+
 
 #Note: if deterr = 1, you'd need a legend ('leg_end = 1') in the top row (I often choose top right panel)
 #Here, ITN isn't specified in the labels. But could change to e.g. 'IG2 (Unwashed)'

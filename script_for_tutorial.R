@@ -65,7 +65,7 @@ mx <- max(df[df$treatment=='C'|df$treatment=='N1u'|df$treatment=='N1w',]$total)
 #'mx' gives the range of counts that are used for the plot (as above)
 #'pieX' gives the x position of the pie chart. You may wish to move this, if it blocks some of the bars
 #You can add the option 'pie = 0' to generate the plot without the pie chart
-pnel1(dataa = df, arm = 'C', arm_title = 'Control', mx=mx, pieX = 0.15)
+pnel1(dataa = df, arm = 'C', arm_title = 'Control', mx=mx, pieX = 0.15, pie = 0)
 pnel1(dataa = df, arm = 'N1u', arm_title = 'ITN (Unwashed)', mx=mx, pieX = 0.15)
 pnel1(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)', mx=mx, pieX = 0.15)
 
@@ -92,7 +92,8 @@ tapply(df$total, df$treatment, mean)
 bfi(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w',
     arm_label1 = 'Control', arm_label2 = 'ITN Unwashed', arm_label3 = 'ITN Washed')
 #Note how the percentages change, once deterrence is turned on (denominator changes)
-bfi(dataa = df, deterr = 1, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w',
+#Here we also demonstrate how to change the size of the text labels
+bfi(dataa = df, deterr = 1, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', text_size = 4.4,
     arm_label1 = 'Control', arm_label2 = 'ITN Unwashed', arm_label3 = 'ITN Washed')
 
 #Let's put all the panels together, and save the figure
@@ -105,6 +106,36 @@ plot_grid(pnel1(dataa = df, arm = 'C', arm_title = 'Control', mx=mx, pieX = 0.1)
           error_bar_prop(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)'),
           nrow=2, labels = c('a','b','c','d','e','f'))
 ggsave('Six_panel_figure.pdf',height = 12.0, width = 17.0)
+
+#Alternatively, you may wish to look at blood-feeding & deterrence for all arms 
+# in the trial. This can be done using the function 'bfi_all_arms()'.
+# To use this function, you need to make a list of the trial arms, as you 
+# wish them to appear in the plot labels.
+
+#Here are two examples
+net_names <- unique(df$treatment) #i.e. as they appear in the dataset
+#Or, you can customise them. Note: the length of this list must match the number
+# of arms in the trial
+net_names <- c('Untreated Net', 'ITN1 (Unwashed)','ITN1 (Washed)','ITN2 (Unwashed)',
+               'ITN2 (Washed)','ITN3 (Unwashed)', 'ITN3 (Washed)')
+
+#Now let's see the plots that this function can produce
+
+#Without deterrence
+bfi_all_arms(dataa = df, deterr = 0, arm_labels = net_names)
+#Now, we include deterrence:
+#We can also vary the size of the labels with the option 'text_size'
+bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names, text_size = 4.7)
+
+#You can include this figure in the six-panel plot above, but it could be a bit 
+# squashed if you have lots of trial arms!
+plot_grid(pnel1(dataa = df, arm = 'C', arm_title = 'Control', mx=mx, pieX = 0.1),
+          pnel1(dataa = df, arm = 'N1u', arm_title = 'ITN (Unwashed)', mx=mx, pieX = 0.1),
+          pnel1(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)', mx=mx, leg_end = 0, pieX = 0.1),
+          bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names, text_size = 4.6),
+          error_bar_prop(dataa = df, arm = 'N1u', arm_title = 'ITN (Unwashed)'),
+          error_bar_prop(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)'),
+          nrow=2, labels = c('a','b','c','d','e','f'))
 
 ###################################################################################
 ##########       Section 3. Fit a regression model to the data     ################
