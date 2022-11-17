@@ -388,9 +388,6 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
 #bfi(deterr = 1)
 
 net_names <- unique(df$treatment)
-net_names <- c('Untreated Net', 'ITN1 (Unwashed)','ITN1 (Washed)','ITN2 (Unwashed)',
-               'ITN2 (Washed)','ITN3 (Unwashed)', 'ITN3 (Washed)')
-#arm_labels <- net_names
 
 bfi_all_arms <- function(dataa = df, deterr = 0,
                 arm_labels = net_names, text_size = 4.9){
