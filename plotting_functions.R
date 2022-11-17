@@ -478,7 +478,7 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
         return(bfi_plot)
     }
 }
-bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names)  
+#bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names)  
 
 
 #Note: if deterr = 1, you'd need a legend ('leg_end = 1') in the top row (I often choose top right panel)
