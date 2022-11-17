@@ -243,8 +243,13 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
                 sum(dataa[dataa$treatment==arm1,]$unf_live), sum(dataa[dataa$treatment==arm1,]$bf_live))
     )
     head(dfc)
-
+    dfc$group <- ordered(dfc$group,
+                         levels = c('Unfed Dead','Fed Dead', 'Unfed Alive','Fed Alive'))
+    #add percentages?
+    dfc$valuePC <- paste0(round(100*dfc$value/sum(dfc$value)),'%') #set to '' if equal to "0%"?
+    dfc$loc <- sum(dfc$value) - cumsum(dfc$value) + 0.67*(dfc$value)
     #
+    
     dfVu <- data.frame(
       group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
       value = c(sum(dataa[dataa$treatment==arm2,]$unf_dead), sum(dataa[dataa$treatment==arm2,]$bf_dead),
