@@ -149,6 +149,8 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
       draw_plot(MH_C) +
       draw_plot(insetC, x = pieX, y = pieY, width = .42, height = .42)
     #MH_C_i
+  }else{
+    MH_C_i <- MH_C_i + ggtitle(arm_title)
   }
   MH_C_i
 }
@@ -398,7 +400,8 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
                 arm_labels = net_names, text_size = 4.9){
 
   if(deterr==0){
-    lu <- unique(dataa$treatment)
+    lu <- sort(unique(dataa$treatment))
+    #print(lu)
     l <- length(lu)
     aux <- data.frame('group' = as.character(), 'value'=as.integer(),
                       'net' = as.character(), 'PC2' = as.numeric())
@@ -414,7 +417,7 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
       dfc$valuePC2 <- dfc$value / sum(dfc$value)
       aux <- rbind(aux, dfc)
     }
-    print(aux)
+    #print(aux)
     bf <- rep(0,l)
     for(i in 1:l){
       bf[i] <- aux[aux$net==lu[i] & aux$group=='Fed Alive',]$valuePC2 + 
@@ -430,17 +433,17 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
       themeJDC + coord_flip() + theme(legend.position = 'bottom',
         axis.title = element_blank(), axis.ticks = element_blank(),
         axis.text = element_blank()) + ggtitle('    Blood Fed per feeding attempt') +      
-      geom_text(data = data.frame(lb = arm_labels, loc = seq(1,l,1)),
+      geom_text(data = data.frame(lb = sort(arm_labels), loc = seq(1,l,1)),
                 aes(y=0.1,x=loc,label = lb), size = sz, hjust = 0) + 
       geom_rect(data = data.frame(x1 = seq(0.55,0.55+l-1,1), x2 = seq(1.45,1.45+l-1,1),
                    y1 = 1 - bf, y2 = 1), aes(xmin = x1, xmax = x2, ymin = y1, ymax = y2),
                 color = 'black', fill = NA) + 
       geom_text(data = data.frame(lbl = bfc, bf=bf), aes(x=seq(1,l,1),#y=1-0.5*bf,
-                                  y = 1-0.5*min(bf), label=bfc), size = sz)
+                                  y = 1-0.5*min(bf), label=lbl), size = sz)
     return(bfi_plot)
     
   }else{
-    lu <- unique(dataa$treatment)
+    lu <- sort(unique(dataa$treatment))
     l <- length(lu)
     aux <- data.frame('group' = as.character(), 'value'=as.integer(),
                       'net' = as.character(), 'PC2' = as.numeric())
@@ -473,13 +476,13 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
         themeJDC + coord_flip() + theme(legend.position = 'bottom',
                                         axis.title = element_blank(), axis.ticks = element_blank(),
                                         axis.text = element_blank()) + ggtitle('    Blood Fed per feeding attempt') +      
-        geom_text(data = data.frame(lb = arm_labels, loc = seq(1,l,1)),
+        geom_text(data = data.frame(lb = sort(arm_labels), loc = seq(1,l,1)),
                   aes(y=0.1,x=loc,label = lb), size = sz, hjust = 0) + 
         geom_rect(data = data.frame(x1 = seq(0.55,0.55+l-1,1), x2 = seq(1.45,1.45+l-1,1),
                                     y1 = 1 - bf, y2 = 1), aes(xmin = x1, xmax = x2, ymin = y1, ymax = y2),
                   color = 'black', fill = NA) + 
         geom_text(data = data.frame(lbl = bfc, bf=bf), aes(x=seq(1,l,1),#y=1-0.5*bf,
-                                                           y = 1-0.5*min(bf), label=bfc), size = sz)
+                                                           y = 1-0.5*min(bf), label=lbl), size = sz)
         return(bfi_plot)
     }
 }
