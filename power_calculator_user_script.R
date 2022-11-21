@@ -60,13 +60,12 @@ table(xc$net)
 table(xc$hut)
 table(xc$sleeper)
 
+detectCores()
+
 t1 <- Sys.time()
-lazy(trialX = trial, npw1 = nn, rotations1 = 2, varO1 = varO, 
-     nsim1 = 500, n_armsX = tt, mos_detX = det, meanMosX = meanMos, dispMosX = dispMos,
+lazy(parallelise = 0, trialX = trial, npw1 = nn, rotations1 = 2, varO1 = varO, 
+     nsim1 = 100, n_armsX = tt, mos_detX = det, meanMosX = meanMos, dispMosX = dispMos,
      aoiX = aoi, mortalitiesX = mort)
 t2 <- Sys.time()
 t2 - t1
 #system("say Just finished!")
-
-
-

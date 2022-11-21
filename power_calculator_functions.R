@@ -2,7 +2,7 @@ library(lme4)
 #devtools::install_github("pcdjohnson/GLMMmisc")
 library(GLMMmisc)
 library("optimx") #Standard installation??
-library(ggplot2)
+#library(ggplot2)
 library(parallel)
 
 #user-defined function, to convert from log-odds scale to probability scale
@@ -328,19 +328,80 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){
 #              round(binom.test(table(factor(mm,c(1,0))))$conf.int[2],3),']'))
 
 #nc <- detectCores() - 1
-lazy <- function(trialX = 1, npw1 = 6, rotations1 = 1, varO1 = 1, 
+lazy <- function(parallelise = 0, trialX = 1, npw1 = 6, rotations1 = 1, varO1 = 1, 
                  nsim1 = 1000, n_armsX = 7, mos_detX = 0, meanMosX = 10, dispMosX = 1,
                  aoiX = c(4,6), mortalitiesX = c(0.04, 0.3,0.2,0.4,0.2,0.5,0.34)){
+  if(parallelise!=0 & parallelise!=1 & parallelise!=2){
+    print('Operation was not executed. Parallelise must take a value of (i) 0 (code not parallelised); (ii) Parallelised for Windows; (iii) Parallilised for Mac. If in doubt, set to zero')
+    return(-9)
+  }
   nsim <- nsim1
-  ncores <- detectCores() - 1
-  #t1 <- Sys.time()
-  sz <- mclapply(1:nsim1, function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
-                                          dataset = simulate_trial(n_arms = n_armsX, npw = npw1, 
-                                rotations = rotations1, mos_det = mos_detX, meanMos = meanMosX, 
-                                          dispMos = dispMosX, mortalities = mortalitiesX,
-                                              varH=0.1, varS = 0.2, varO = varO1)))
+  if(parallelise==0){#|parallelise==1){
+    #t1 <- Sys.time()
+    sz <- lapply(1:nsim1, function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
+                                                          dataset = simulate_trial(n_arms = n_armsX, npw = npw1, 
+                                                                                   rotations = rotations1, mos_det = mos_detX, meanMos = meanMosX, 
+                                                                                   dispMos = dispMosX, mortalities = mortalitiesX,
+                                                                                   varH=0.1, varS = 0.2, varO = varO1)))
+    #t2 <- Sys.time()
+    #t2 - t1
+  }
+  if(parallelise==1){ # Under construction
+    ncores <- detectCores() - 1
+    
+    n_armsY <- n_armsX
+    trialY <- trialX
+    aoiY <- aoiX
+    dispMosY <- dispMosX
+    meanMosY <- meanMosX
+    varOY <- varO1
+    mortalitiesY <- mortalitiesX
+    npwY <- npw1
+    #print(npwY)
+    mos_detY <- mos_detX
+    rotationsY <- rotations1
+    
+    cl <- makeCluster(ncores)
+    clusterExport(cl,'npwY', envir = environment())
+    clusterExport(cl,'rotationsY', envir = environment())
+    clusterExport(cl,'mortalitiesY', envir = environment())
+    clusterExport(cl,'varOY', envir = environment())
+    clusterExport(cl,'mos_detY', envir = environment())
+    clusterExport(cl,'meanMosY', envir = environment())
+    clusterExport(cl,'dispMosY', envir = environment())
+    clusterExport(cl,'n_armsY', envir = environment())
+    clusterExport(cl,'aoiY', envir = environment())
+    clusterExport(cl,'trialY', envir = environment())
+    clusterExport(cl,'hypothesis_test')
+    clusterExport(cl,'simulate_trial')
+    clusterExport(cl,'lazy')
+    clusterExport(cl,'InvLogit')
+    clusterEvalQ(cl, {
+      library(lme4)
+      library(GLMMmisc)
+      library("optimx")
+    })
+    #t1 <- Sys.time()
+    sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
+                                                              dataset = simulate_trial(n_arms = n_armsY, npw = npwY,
+                                                                                       rotations = rotationsY, mos_det = mos_detY, meanMos = meanMosY,
+                                                                                       dispMos = dispMosY, mortalities = mortalitiesY,
+                                                                                       varH=0.1, varS = 0.2, varO = varOY)))
+    stopCluster(cl)
+    t2 <- Sys.time()
+    t2 - t1
+  }
+  if(parallelise==2){
+    ncores <- detectCores() - 1
+    #t1 <- Sys.time()
+    sz <- mclapply(1:nsim1, function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
+                                                dataset = simulate_trial(n_arms = n_armsX, npw = npw1, 
+                                                              rotations = rotations1, mos_det = mos_detX, meanMos = meanMosX, 
+                                                                dispMos = dispMosX, mortalities = mortalitiesX,
+                                                                  varH=0.1, varS = 0.2, varO = varO1)))
   #t2 <- Sys.time()
   #t2 - t1
+  }
   mm <- unlist(sz)
   print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%, 95% CI: [',
                100*round(binom.test(table(factor(mm,c(1,0))))$conf.int[1],3),',',
