@@ -83,7 +83,6 @@ simulate_trial <- function(n_arms, npw, mos_det = 0, meanMos = 10, dispMos = 1,
       mosdataX$week <- mosdataX$week + max(mosdata$week)
       #Now add it on to the existing trial design
       mosdata <- rbind(mosdata,mosdataX)
-      #print('test')
     }else{
       mosdata$day <- npw*(mosdata$week - 1) + mosdata$night
       intt <- as.integer(rotations - 1)
@@ -109,7 +108,6 @@ simulate_trial <- function(n_arms, npw, mos_det = 0, meanMos = 10, dispMos = 1,
     
   }
   
-  
   #Now make a unique identifier for each data point
   mosdata$observation <- factor(formatC(1:nrow(mosdata), flag="0", width=3))
   mosdata$sleeper <- factor(mosdata$sleeper)
@@ -133,8 +131,8 @@ simulate_trial <- function(n_arms, npw, mos_det = 0, meanMos = 10, dispMos = 1,
                net = log(or_vec)),
              rand.V = c(hut = varH, sleeper = varS, observation = varO),
              distribution = "binomial")
-  print(dim(mosdata))
-  print(rotations)
+  #print(dim(mosdata))
+  #print(rotations)
   return(mosdata)
   
 }
@@ -292,7 +290,7 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){
     #placeholder
     #count <- count + 1
   #}
-  return('All quiet?')
+  #return('All quiet?')
 }
 #test
 #hypothesis_test(trial = 1, aoi = c(3,4), dataset = xc)
@@ -328,9 +326,9 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){
 #              round(binom.test(table(factor(mm,c(1,0))))$conf.int[2],3),']'))
 
 #nc <- detectCores() - 1
-lazy <- function(parallelise = 0, trialX = 1, npw1 = 6, rotations1 = 1, varO1 = 1, 
+power_calculator <- function(parallelise = 0, trialX = 1, npwX = 6, rotationsX = 1, varO1 = 1, 
                  nsim1 = 1000, n_armsX = 7, mos_detX = 0, meanMosX = 10, dispMosX = 1,
-                 aoiX = c(4,6), mortalitiesX = c(0.04, 0.3,0.2,0.4,0.2,0.5,0.34)){
+                 aoiX = c(4,6), mortalitiesX){
   if(parallelise!=0 & parallelise!=1 & parallelise!=2){
     print('Operation was not executed. Parallelise must take a value of (i) 0 (code not parallelised); (ii) Parallelised for Windows; (iii) Parallilised for Mac. If in doubt, set to zero')
     return(-9)
@@ -339,8 +337,8 @@ lazy <- function(parallelise = 0, trialX = 1, npw1 = 6, rotations1 = 1, varO1 = 
   if(parallelise==0){#|parallelise==1){
     #t1 <- Sys.time()
     sz <- lapply(1:nsim1, function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
-                                                          dataset = simulate_trial(n_arms = n_armsX, npw = npw1, 
-                                                                                   rotations = rotations1, mos_det = mos_detX, meanMos = meanMosX, 
+                                                          dataset = simulate_trial(n_arms = n_armsX, npw = npwX, 
+                                                                                   rotations = rotationsX, mos_det = mos_detX, meanMos = meanMosX, 
                                                                                    dispMos = dispMosX, mortalities = mortalitiesX,
                                                                                    varH=0.1, varS = 0.2, varO = varO1)))
     #t2 <- Sys.time()
@@ -356,10 +354,10 @@ lazy <- function(parallelise = 0, trialX = 1, npw1 = 6, rotations1 = 1, varO1 = 
     meanMosY <- meanMosX
     varOY <- varO1
     mortalitiesY <- mortalitiesX
-    npwY <- npw1
+    npwY <- npwX
     #print(npwY)
     mos_detY <- mos_detX
-    rotationsY <- rotations1
+    rotationsY <- rotationsX
     
     cl <- makeCluster(ncores)
     clusterExport(cl,'npwY', envir = environment())
@@ -395,8 +393,8 @@ lazy <- function(parallelise = 0, trialX = 1, npw1 = 6, rotations1 = 1, varO1 = 
     ncores <- detectCores() - 1
     #t1 <- Sys.time()
     sz <- mclapply(1:nsim1, function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
-                                                dataset = simulate_trial(n_arms = n_armsX, npw = npw1, 
-                                                              rotations = rotations1, mos_det = mos_detX, meanMos = meanMosX, 
+                                                dataset = simulate_trial(n_arms = n_armsX, npw = npwX, 
+                                                              rotations = rotationsX, mos_det = mos_detX, meanMos = meanMosX, 
                                                                 dispMos = dispMosX, mortalities = mortalitiesX,
                                                                   varH=0.1, varS = 0.2, varO = varO1)))
   #t2 <- Sys.time()
@@ -409,39 +407,3 @@ lazy <- function(parallelise = 0, trialX = 1, npw1 = 6, rotations1 = 1, varO1 = 
   return(c(100*sum(mm)/length(mm),100*binom.test(table(factor(mm,c(1,0))))$conf.int[1],
            100*binom.test(table(factor(mm,c(1,0))))$conf.int[2]))
 }
-#lazy(nsim1 = 111)
-
-# storeR <- seq(1,2.25,0.25)
-# store1 <- storeR
-# store2 <- storeR
-# store3 <- storeR
-# for(i in 1:(length(storeR))){
-#   xx <- lazy(rotations1 = storeR[i])
-#   store1[i] <- xx[1]
-#   store2[i] <- xx[2]
-#   store3[i] <- xx[3]
-#   print(i)
-# }
-# dfs <- data.frame('rotations' = storeR, 'power' = store1, 'ci1' = store2,
-#                   'ci2' = store3)
-# ggplot(dfs) + geom_point(aes(x=rotations,y=power)) + 
-#   geom_line(aes(x=rotations,y=power)) + theme_classic() +
-#   geom_errorbar(aes(x=rotations, ymin = 100*ci1, ymax = 100*ci2))
-
-#############################################################
-# Parallise code (Windows version) -- should be checked..
-# ncores <- detectCores() - 1
-# cl <- makeCluster(ncores)
-# clusterExport(cl,'hypothesis_test')
-# clusterExport(cl,'simulate_trial')
-# clusterEvalQ(cl, {
-#   library(lme4)
-#   library(GLMMmisc)
-#   library("optimx")
-# })
-# save3 <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = 1, aoi = c(4,6), 
-#             dataset = simulate_trial(n_arms = 7, npw = 7, 
-#                         mortalities = c(0.04, 0.3,0.2,0.4,0.2,0.49,0.34),
-#                             varH=0.1, varS = 0.2, varO = .3)))
-
-

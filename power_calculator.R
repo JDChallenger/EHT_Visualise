@@ -7,19 +7,24 @@ InvLogit <- function(X){
   exp(X)/(1+exp(X))
 }
 
-# What type of trial is it? superiority trial (trial=1); non-inferiority trial (trial=2)
-#Or extend =3 & =4 to say whether washed & unwashed nets should be combined
-#prior to testing the null hypothesis
+# What type of trial is it? 
+# The code we've developed is designed to test for either 
+# superiority or non-inferiority
+# We can make this test between two trial arms. 
+# However, in some trials both washed & unwashed nets of the same type are included.
+# Therefore, we allow the option of combining data from washed & unwashed net of the 
+# same type before hypothesis testing. The variable 'trial' determines the primary study
+# question; it can take 4 values:
 
-# 1. Superiority between two trial arms
-# 2. Superiority between two ITNs (combining data from washed & unwashed ITNs of two types i.e. involving 4 trial arms)
-# 3. Non-inferiority between two trial arms
-# 4. Non-inferiority between two ITNs (combining data from washed & unwashed ITNs of two types i.e. involving 4 trial arms)
+# trial=1. Superiority between two trial arms
+# trial=2. Superiority between two ITNs (combining data from washed & unwashed ITNs of two types i.e. involving 4 trial arms)
+# trial=3. Non-inferiority between two trial arms
+# trial=4. Non-inferiority between two ITNs (combining data from washed & unwashed ITNs of two types i.e. involving 4 trial arms)
 
 trial <- 1
 
 #There may be multiple nets in the trial. For superiority or non-inferiority, we need
-#to specify which two arms are of interest (a.o.i)
+#to specify which arms are of interest (a.o.i)
 
 #Trial may contain multiple products. We'll need to specify which arms are
 # involved in the hypothesis testing
@@ -32,7 +37,7 @@ aoi3 <- c(4,6) # We'll test whether the latter arm is non-inferior to the former
 #ITN2 (washed). We'll test whether ITN2 is non-inferior to ITN1
 aoi4 <- c(4,5,6,7)
 
-#May need a non-inferiority margin
+#You may need a non-inferiority margin (if trial=3 or trial = 4)
 NIM <- 0.7
 
 #How many trial arms in total? 
@@ -45,7 +50,7 @@ mort <- rep(0,tt) #empty list, same length as the number of trial arms
 #Fill in your own values!
 mort <- c(0.04, 0.25, 0.15, 0.35, 0.25, 0.35, 0.25)
 
-#Do we require that the number of trial arms equal the number of huts/sleepers?
+#Currently, we require that the number of trial arms equal the number of huts/sleepers
 n_volunteer <- tt
 n_hut <- tt
 
@@ -55,11 +60,10 @@ rotations <- 1
 
 #How many mosquitoes per night per hut?
 meanMos <- 11
-dispMos <- 1
 #Should this be constant (det=1), or be sampled from a negative binomial distn (det=0)
-# with the given mean (meanMos)
+# with the given mean (meanMos) and dispersion parameter (dispMos)
 det <- 0
-
+dispMos <- 1
 
 #Make a vector of trial arms
 aux <- c('C',paste0('E',seq(1,tt-1)))

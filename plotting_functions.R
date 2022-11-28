@@ -335,6 +335,10 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
                 sum(dataa[dataa$treatment==arm2,]$unf_live),sum(dataa[dataa$treatment==arm2,]$bf_live),
                 sum(dataa[dataa$treatment==arm1,]$total) - sum(dataa[dataa$treatment==arm2,]$total))
     )
+    if(dfVu2[dfVu2$group=='Deterred',]$value < 0){
+      dfVu2[dfVu2$group=='Deterred',]$value = 0
+      print('Negative deterrence set to zero')
+    }
     head(dfVu2)
     dfVu2$net <- 'Vu'
     dfVu2$valuePC2 <- dfVu2$value / sum(dfVu2$value)
@@ -345,6 +349,10 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
                 sum(dataa[dataa$treatment==arm3,]$unf_live),sum(dataa[dataa$treatment==arm3,]$bf_live),
                 sum(dataa[dataa$treatment==arm1,]$total) - sum(dataa[dataa$treatment==arm3,]$total))
     )
+    if(dfVw2[dfVw2$group=='Deterred',]$value < 0){
+      dfVw2[dfVw2$group=='Deterred',]$value = 0
+      print('Negative deterrence set to zero')
+    }
     head(dfVw2)
     dfVw2$net <- 'Vw'
     dfVw2$valuePC2 <- dfVw2$value / sum(dfVw2$value)
@@ -397,10 +405,10 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
 net_names <- unique(df$treatment)
 
 bfi_all_arms <- function(dataa = df, deterr = 0,
-                arm_labels = net_names, text_size = 4.9){
+                arm_labels = net_names, text_size = 4.9, control_arm = 1){
 
   if(deterr==0){
-    lu <- sort(unique(dataa$treatment))
+    lu <- unique(dataa$treatment) #sort?
     #print(lu)
     l <- length(lu)
     aux <- data.frame('group' = as.character(), 'value'=as.integer(),
@@ -433,17 +441,17 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
       themeJDC + coord_flip() + theme(legend.position = 'bottom',
         axis.title = element_blank(), axis.ticks = element_blank(),
         axis.text = element_blank()) + ggtitle('    Blood Fed per feeding attempt') +      
-      geom_text(data = data.frame(lb = sort(arm_labels), loc = seq(1,l,1)),
+      geom_text(data = data.frame(lb = arm_labels, loc = seq(1,l,1)),
                 aes(y=0.1,x=loc,label = lb), size = sz, hjust = 0) + 
       geom_rect(data = data.frame(x1 = seq(0.55,0.55+l-1,1), x2 = seq(1.45,1.45+l-1,1),
                    y1 = 1 - bf, y2 = 1), aes(xmin = x1, xmax = x2, ymin = y1, ymax = y2),
                 color = 'black', fill = NA) + 
       geom_text(data = data.frame(lbl = bfc, bf=bf), aes(x=seq(1,l,1),#y=1-0.5*bf,
                                   y = 1-0.5*min(bf), label=lbl), size = sz)
-    return(bfi_plot)
+      return(bfi_plot)
     
   }else{
-    lu <- sort(unique(dataa$treatment))
+    lu <- unique(dataa$treatment)
     l <- length(lu)
     aux <- data.frame('group' = as.character(), 'value'=as.integer(),
                       'net' = as.character(), 'PC2' = as.numeric())
@@ -454,9 +462,13 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
                   sum(dataa[dataa$treatment==lu[i],]$bf_dead),
                   sum(dataa[dataa$treatment==lu[i],]$unf_live), 
                   sum(dataa[dataa$treatment==lu[i],]$bf_live),
-                  sum(dataa[dataa$treatment==lu[1],]$total) - 
+                  sum(dataa[dataa$treatment==lu[control_arm],]$total) - 
                     sum(dataa[dataa$treatment==lu[i],]$total))
       )
+      if(dfc[dfc$group=='Deterred',]$value < 0){
+        dfc[dfc$group=='Deterred',]$value = 0
+        print('Negative deterrence set to zero')
+      }
       dfc$net <- lu[i]
       dfc$valuePC2 <- dfc$value / sum(dfc$value)
       aux <- rbind(aux, dfc)
@@ -476,7 +488,7 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
         themeJDC + coord_flip() + theme(legend.position = 'bottom',
                                         axis.title = element_blank(), axis.ticks = element_blank(),
                                         axis.text = element_blank()) + ggtitle('    Blood Fed per feeding attempt') +      
-        geom_text(data = data.frame(lb = sort(arm_labels), loc = seq(1,l,1)),
+        geom_text(data = data.frame(lb = arm_labels, loc = seq(1,l,1)),
                   aes(y=0.1,x=loc,label = lb), size = sz, hjust = 0) + 
         geom_rect(data = data.frame(x1 = seq(0.55,0.55+l-1,1), x2 = seq(1.45,1.45+l-1,1),
                                     y1 = 1 - bf, y2 = 1), aes(xmin = x1, xmax = x2, ymin = y1, ymax = y2),
