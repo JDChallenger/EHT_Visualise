@@ -55,7 +55,10 @@ n_volunteer <- tt
 n_hut <- tt
 
 #Length of trial. 
-#Could either describe in terms of number of complete rotations of the LSD, 
+#This is described in terms of number of complete 'rotations' of the trial
+# For example, if you have 6 huts and 6 trial arms, one rotation would take 6 weeks
+# to complete (each net spends one week in a single hut).
+# At the moment, we require at least one rotation for the code to work
 rotations <- 1
 
 #How many mosquitoes per night per hut?
