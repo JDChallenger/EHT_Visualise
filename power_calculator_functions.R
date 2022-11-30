@@ -19,8 +19,8 @@ repeat_fn <- function(sttr, repp){
   return(bray)
 }
 
-simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos = 10, dispMos = 1,
-                           rotations = 1, responses, varO = 0.8){
+simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
+                           rotations = 1, responses, varO = 0.9){
   #Check length(responses) == n_arms
   if(n_arms != length(responses)){
     print('Operation was not executed. Check the number of arms, and corresponding vector of mosquito mortalities')
@@ -141,8 +141,8 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos = 10, dispMos =
 #                varO = 1)
 # head(xc)
 
-simulate_trial_IRS <- function(trial_days, n_arms, rep_arms = 4, mos_det = 0, meanMos = 10,
-                               dispMos = 1, responses, varO = 0.8){
+simulate_trial_IRS <- function(trial_days, n_arms, rep_arms, mos_det = 0, meanMos,
+                               dispMos = 1.5, responses, varO = 0.9){
   nhuts <- n_arms*rep_arms
   aux <- repeat_fn(sttr = c('C',paste0('E',seq(1,n_arms-1))), repp = rep_arms)
   aux_resp <- repeat_fn(sttr = mortalities_IRS, repp = rep_arms)
@@ -468,15 +468,13 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){
 #                                mortalities = c(0.04, 0.3,0.2,0.4,0.34,0.45,0.34),
 #                                         varH=0.1, varS = 0.2, varO = 1))
 
-#nc <- detectCores() - 1
-power_calculator_ITN <- function(parallelise = 0, trialX = 1, npwX = 6, rotationsX = 1, varO1 = 1, 
-                 nsim1 = 1000, n_armsX = 7, mos_detX = 0, meanMosX = 10, dispMosX = 1,
-                 aoiX = c(4,6), responsesX){
+power_calculator_ITN <- function(parallelise = 0, trialX, npwX, rotationsX = 1, varO1 = 0.9, 
+                 nsim1 = 1000, n_armsX, mos_detX = 0, meanMosX, dispMosX = 1.5,
+                 aoiX, responsesX){
   if(parallelise!=0 & parallelise!=1 & parallelise!=2){
     print('Operation was not executed. Parallelise must take a value of (i) 0 (code not parallelised); (ii) Parallelised for Windows; (iii) Parallilised for Mac. If in doubt, set to zero')
     return(-9)
   }
-  nsim <- nsim1
   if(parallelise==0){
     sz <- lapply(1:nsim1, function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
                                                           dataset = simulate_trial(n_arms = n_armsX, npw = npwX, 
@@ -518,7 +516,7 @@ power_calculator_ITN <- function(parallelise = 0, trialX = 1, npwX = 6, rotation
       library(GLMMmisc)
       library("optimx")
     })
-    sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
+    sz <- parLapply(cl, 1:nsim1, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
                                                               dataset = simulate_trial(n_arms = n_armsY, npw = npwY,
                                                                                        rotations = rotationsY, mos_det = mos_detY, meanMos = meanMosY,
                                                                                        dispMos = dispMosY, responses = responsesY,
@@ -541,15 +539,14 @@ power_calculator_ITN <- function(parallelise = 0, trialX = 1, npwX = 6, rotation
            100*binom.test(table(factor(mm,c(1,0))))$conf.int[2]))
 }
 
-power_calculator_IRS <- function(parallelise = 0, trialX = 1, varO1 = 1, 
-                             nsim1 = 1000, trial_daysX = 15, n_armsX = 4, rep_armsX = 4, mos_detX = 0, meanMosX = 10, dispMosX = 1,
-                             aoiX = c(4,6), responsesX){
+power_calculator_IRS <- function(parallelise = 0, trialX, varO1 = .9, nsim1 = 400, 
+                             trial_daysX, n_armsX, rep_armsX, mos_detX = 0, meanMosX,
+                             dispMosX = 1.5, aoiX, responsesX){
   if(parallelise!=0 & parallelise!=1 & parallelise!=2){
     print('Operation was not executed. Parallelise must take a value of (i) 0 (code not parallelised); (ii) Parallelised for Windows; (iii) Parallilised for Mac. If in doubt, set to zero')
     return(-9)
   }
-  nsim <- nsim1
-  if(parallelise==0){#|parallelise==1){
+  if(parallelise==0){
     sz <- lapply(1:nsim1, function(...) hypothesis_test(trial = trialX, aoi = aoiX, 
                                           dataset = simulate_trial_IRS(trial_days = trial_daysX, n_arms = n_armsX, rep_arms = rep_armsX, mos_det = mos_detX, meanMos = meanMosX, 
                                                 dispMos = dispMosX, responses = responsesX,
@@ -589,7 +586,7 @@ power_calculator_IRS <- function(parallelise = 0, trialX = 1, varO1 = 1,
       library(GLMMmisc)
       library("optimx")
     })
-    sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
+    sz <- parLapply(cl, 1:nsim1, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
                                                 dataset = simulate_trial_IRS(n_arms = n_armsY, npw = npwY,
                                                   rotations = rotationsY, mos_det = mos_detY, meanMos = meanMosY,
                                                     dispMos = dispMosY, responses = responsesY,
@@ -602,7 +599,7 @@ power_calculator_IRS <- function(parallelise = 0, trialX = 1, varO1 = 1,
                                             dataset = simulate_trial_IRS(n_arms = n_armsX, rep_arms = rep_armsX, 
                                               trial_days = trial_daysX, mos_det = mos_detX, meanMos = meanMosX, 
                                                 dispMos = dispMosX, responses = responsesX,
-                                                  varO = varO1)))
+                                                  varO = varO1))) #add mc.cores = ncores?
   }
   mm <- unlist(sz)
   print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%, 95% CI: [',

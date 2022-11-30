@@ -27,48 +27,38 @@ source('power_calculator_functions.R')
 # trial=7. Non-inferiority between two trial arms
 # trial=8. Non-inferiority between two ITNs (combining data from washed & unwashed ITNs of two types i.e. involving 4 trial arms)
 
-trial <- 1
+#How many trial arms in total? (n_arms)
 
-#How many trial arms in total? 
-n_arms <- 7
+## How many nights should an ITN stay in a hut before the nets are rotated? (npw)
 
-## How many nights should an ITN stay in a hut before the nets are rotated?
-npw <- 7 #Must be less than or equal to number of trial arms
-
+#Expected behaviour in each arm (either for mosquito mortality, or blood-feeding inhibition)
 mortalities <- c(0.05, 0.05, 0.15, 0.25, 0.15, 0.30, 0.2) 
 #blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
-length(mortalities)==n_arms
+#Note: the length of this list should equal the number of trial arms
+#length(mortalities)==n_arms
 #length(blood_feeding)==n_arms
 
 #Trial may contain multiple products. We'll need to specify which arms are
-# involved in the hypothesis testing
-aoi1 <- c(4,6) # We'll test whether the latter arm is superior to the former
-aoi2 <- c(4,5,6,7)# We'll test whether ITN2 is superior to ITN1. In order, these should be ITN1 (unwashed), ITN1 (washed), ITN2 (unwashed), ITN2 (washed). 
-aoi3 <- c(4,6) # We'll test whether the latter arm is non-inferior to the former
-aoi4 <- c(4,5,6,7) # We'll test whether ITN2 is non-inferior to ITN1. # In order, these should be ITN1 (unwashed), ITN1 (washed), ITN2 (unwashed), #ITN2 (washed). 
+# involved in the hypothesis testing (aoi) and what type of trial we're conducting
+#trial = 1; aoi <- c(4,6) # We'll test whether the latter arm is superior to the former
+#trial = 2; aoi <- c(4,5,6,7)# We'll test whether ITN2 is superior to ITN1. In order, these should be ITN1 (unwashed), ITN1 (washed), ITN2 (unwashed), ITN2 (washed). 
+#trial = 3; aoi <- c(4,6) # We'll test whether the latter arm is non-inferior to the former
+#trial = 4; aoi <- c(4,5,6,7) # We'll test whether ITN2 is non-inferior to ITN1. # In order, these should be ITN1 (unwashed), ITN1 (washed), ITN2 (unwashed), #ITN2 (washed). 
 
-#select which one we wish to use
-aoi <- aoi1
-
-# Length of trial. 
+# Length of trial (rotations). 
 # Described in terms of number of complete 'rotations' of the trial. 
 # For example, if you have 6 huts and 6 trial arms, one rotation would take 6 weeks
 # to complete (each net spends one week in a single hut).
 # Needs to be at least 1 at the moment, but you can enter things like '1.25' or '1.5'
-rotations <- 1 
 
 ####################### End of ITN-specific parameters ##################
 
-#How many mosquitoes per night per hut?
-meanMos <- 15
-#Should this be constant ('deterministic', det=1), or be sampled from a
-#negative binomial distn (det=0) with the given mean (meanMos) and
+#How many mosquitoes per night per hut? First we specify the mean number (meanMos) 
+#Should the mosquito counts be a constant ('deterministic', det=1), or be sampled from a
+#negative binomial distn (det=0) with the given mean and
 #dispersion parameter (dispMos) ?
-mos_det <- 0
-dispMos <- 2.0
 
-#random effect(s). 
-varO <- 0.5 # Variance of the observation-level random effect
+#random effect(s). Variance of the observation-level random effect (varO)
 
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
 xc <- simulate_trial_ITN(n_arms = 7, npw = 6, responses = mortalities,
@@ -106,8 +96,8 @@ detectCores()
 # parallelise = 2; Parallise code for Mac OS
 
 t1 <- Sys.time()
-power_calculator_ITN(parallelise = 2, trialX = trial, npwX = npw, rotationsX = 1, varO1 = varO, 
-     nsim1 = 200, n_armsX = n_arms, mos_detX = mos_det, meanMosX = meanMos, 
+power_calculator_ITN(parallelise = 2, trialX = trial, npwX = npw, rotationsX = 1, 
+     nsim1 = 200, n_armsX = n_arms, mos_detX = mos_det, meanMosX = meanMos, varO1 = varO, 
      dispMosX = dispMos, aoiX = aoi, responsesX = mortalities)
 t2 <- Sys.time()
 t2 - t1
