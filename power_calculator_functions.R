@@ -32,9 +32,14 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
   }
   if(rotations < 1){ #At the moment, we need at least 1 rotation
     rotations <- 1
+    print('Trial simulated for rotations = 1')
   }
   if(varO < 0 ){ #At the moment, we need at least 1 rotation
     print('The variance of a random effect must be positive')
+    return(-9)
+  }
+  if(meanMos < 0 | dispMos < 0 ){ #At the moment, we need at least 1 rotation
+    print('Parameters for mosquito counts should be positive')
     return(-9)
   }
   
@@ -136,13 +141,14 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
              distribution = "binomial")
   return(mosdata)
 }
-#test
-# xc <- simulate_trial(n_arms = 7, npw = 5, mortalities = c(0.04, 0.3,0.2, 0.3,0.2, 0.3,0.2),
-#                varO = 1)
-# head(xc)
 
 simulate_trial_IRS <- function(trial_days, n_arms, rep_arms, mos_det = 0, meanMos,
                                dispMos = 1.5, responses, varO = 0.9){
+  if(meanMos < 0 | dispMos < 0 ){ #At the moment, we need at least 1 rotation
+    print('Parameters for mosquito counts should be positive')
+    return(-9)
+  }
+  
   nhuts <- n_arms*rep_arms
   aux <- repeat_fn(sttr = c('C',paste0('E',seq(1,n_arms-1))), repp = rep_arms)
   aux_resp <- repeat_fn(sttr = mortalities_IRS, repp = rep_arms)
@@ -462,11 +468,6 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){
   }
 }
 #test
-#hypothesis_test(trial = 1, aoi = c(3,4), dataset = xc)
-#hypothesis_test(trial = 1, aoi = c(4,6), 
-#                dataset = simulate_trial(n_arms = 7, npw = 7, 
-#                                mortalities = c(0.04, 0.3,0.2,0.4,0.34,0.45,0.34),
-#                                         varH=0.1, varS = 0.2, varO = 1))
 
 power_calculator_ITN <- function(parallelise = 0, trialX, npwX, rotationsX = 1, varO1 = 0.9, 
                  nsim1 = 1000, n_armsX, mos_detX = 0, meanMosX, dispMosX = 1.5,
