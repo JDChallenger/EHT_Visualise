@@ -33,7 +33,7 @@ source('power_calculator_functions.R')
 
 #Expected behaviour in each arm (either for mosquito mortality, or blood-feeding inhibition)
 mortalities <- c(0.05, 0.05, 0.15, 0.25, 0.15, 0.30, 0.2) 
-#blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
+blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
 #Note: the length of this list should equal the number of trial arms
 #length(mortalities)==n_arms
 #length(blood_feeding)==n_arms
@@ -79,7 +79,7 @@ table(xc$sleeper)
 hypothesis_test(trial = 1, aoi = c(4,6), dataset = xc)
 
 ####
-# The function below simulates many trials ('nsim1' specifies how many).
+# The function below simulates many trials ('nsim' specifies how many).
 # For each one, hypothesis testing will be performed (defined by the values chosen for 
 # 'aoi' and 'trial' above). Statistical power is given by the percentage of trials 
 # for which the null hypothesis is rejected.
@@ -96,25 +96,20 @@ detectCores()
 # parallelise = 2; Parallise code for Mac OS
 
 t1 <- Sys.time()
-power_calculator_ITN(parallelise = 2, trialX = trial, npwX = npw, rotationsX = 1, 
-     nsim1 = 200, n_armsX = n_arms, mos_detX = mos_det, meanMosX = meanMos, varO1 = varO, 
-     dispMosX = dispMos, aoiX = aoi, responsesX = mortalities)
+power_calculator_ITN(parallelise = 0, trial = 1, npw = 6, rotations = 1, 
+     nsim = 100, n_arms = 7, mos_det = 1, meanMos = 12, varO = .9, 
+     dispMos = 2, aoi = c(4,6), responses = mortalities)
 t2 <- Sys.time()
 t2 - t1
 #system("say Just finished!")
 
 
 ####################### EHTs involving IRS ############################## 
-#how many trial arms (including untreated control)
-n_arms <- 4
-#How many huts per product? (And do you need to repeat untreated control? Let's say yes for now)
-rep_arm <- 4
-#How many huts does this require? This'll be the same as the number of volunteers required
-nhuts <- n_arms*rep_arm
-nhuts
+# n_arms: how many trial arms (including untreated control) 
+# rep_arm: how many huts per product? (And do you need to repeat untreated control? Let's say yes for now)
+# Then the number of huts in the trial will be (n_arms * rep_arm). This'll be the same as the number of volunteers required
 
-#How many days will the trial last? 
-nday <- 50
+#How many days will the trial last? (nday)
 #mortalities (or blood-feeding) in each arm
 mortalities_IRS <- c(0.10, 0.30, 0.50, 0.55)
 #blood_feeding_IRS <- c(0.50, 0.30, 0.30, 0.25)
@@ -159,9 +154,8 @@ hypothesis_test(trial = 9, aoi = c(2,4), dataset = xd)
 # parallelise = 2; Parallise code for Mac OS
 
 t1 <- Sys.time()
-power_calculator_IRS(parallelise = 0, trialX = 1, varO1 = 0.9, trial_daysX = 15,
-                     rep_armsX = 4,
-                 nsim1 = 300, n_armsX = 4, mos_detX = 1, meanMosX = 11, 
-                 dispMosX = 1.4, aoiX = c(3,4), responsesX = mortalities_IRS)
+power_calculator_IRS(parallelise = 0, trial = 1, varO = 0.9, trial_days = 15,
+                     rep_arms = 4, nsim = 300, n_arms = 4, mos_det = 1, meanMos = 11, 
+                 dispMos = 1.4, aoi = c(3,4), responses = mortalities_IRS)
 t2 <- Sys.time()
 t2 - t1
