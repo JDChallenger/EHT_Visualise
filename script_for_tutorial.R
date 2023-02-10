@@ -269,15 +269,23 @@ mortality_summary(modX = fit_n)
 #######       Section 4. Modelling deterrence                ######################
 ###################################################################################
 
-#If no random effects present, use glm.nb from the MASS package
+#If no random effects present, use function glm.nb() from the MASS package
+
+#Let's look for indications of a deterrence effect, by calculating the mean
+# mosquito counts in each trial arm. We'll use the tapply() function
 
 tapply(df$total, df$treatment, mean)
 
-#Is a poisson or negative binomial model better for these count data?
-fig.pois <- fitdist(df$total, "pois") # Poisson distr
+
+#Let's see which distribution better describes the count data- a Poisson distribution
+#or a negative binomial distribution
+fig.pois <- fitdist(df$total, "pois") # Poisson distribution
 plot(fig.pois)
 fig.negbin <- fitdist(df$total, "nbinom") # negative binomial
 plot(fig.negbin)
+#Here we see the Negative binomial model has a lower Akaike's Information Criterion,
+# Hence a better fit
+gofstat(list(fig.pois,fig.negbin), fitnames = c("Poisson", "Negative Binomial"))
 
 fit_nb <- glmer.nb(total ~ treatment + (1|sleeper), data = df)
 summary(fit_nb)
