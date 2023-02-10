@@ -15,9 +15,9 @@ themeJDC <-
         strip.background =element_rect(fill="white",color = 'black'),
         panel.border = element_rect(colour = "black" ,fill = NA),
         legend.background = element_blank(),
-        legend.key = element_blank(), axis.text = element_text(size = 10),
-        axis.title = element_text(size=11.5),
-        legend.text = element_text(size = 10.5))
+        legend.key = element_blank(), axis.text = element_text(size = 10.95),
+        axis.title = element_text(size=11.6),
+        legend.text = element_text(size = 10.7))
 
 # Usually I make figures containing 6 panels from these data. The top row shows nightly data from 3 arms.
 # Often I choose to look at the control arm, and 1 ITN, both unwashed & washed. 
@@ -118,7 +118,7 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
         scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
         theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
               plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
-        geom_text(aes(x=x,y=loc, label = valuePC), size = 3.4, color = 'white') 
+        geom_text(aes(x=x,y=loc, label = valuePC), size = 3.8, color = 'white') 
       #geom_text(aes(x=x,y=loc, label = valuePC, color = factor(col)), size = 3.4) + 
       #scale_color_manual(values = c(trx,'white'))
       
@@ -128,7 +128,7 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
         scale_fill_manual(name = 'Status', values = c(cb[5],cb[3],cb[6],cb[4])) + 
         theme(axis.ticks = element_blank(), legend.position = 'none', axis.text = element_blank(),
               plot.title = element_text(size = 11.5)) + ggtitle( arm_title ) +
-        geom_text(aes(x=x,y=loc, label = valuePC), size = 3.4, color = 'white') 
+        geom_text(aes(x=x,y=loc, label = valuePC), size = 3.7, color = 'white') 
       
     }
     # print(which(dfc$col==1))
@@ -402,7 +402,7 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
 #Note how the percentages change, once deterrence is turned on (denominator changes)
 #bfi(deterr = 1)
 
-net_names <- unique(df$treatment)
+#net_names <- unique(df$treatment)
 
 bfi_all_arms <- function(dataa = df, deterr = 0,
                 arm_labels = net_names, text_size = 4.9, control_arm = 1){

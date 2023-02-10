@@ -11,6 +11,7 @@ library(ggplot2)
 library(dplyr)
 library(reshape2)
 library(fitdistrplus)
+library(lattice)
 
 # The package GLMMmisc has a non-standard installation. It can be installed by running the following 
 # command (remove the comment symbol '#')
@@ -164,6 +165,18 @@ fit <-
     family = binomial, data = df) 
 summary(fit)
 
+#Aside: is the observation-level random effect, included to account for any overdispersion,
+# important to include in the model? Let's look at the model that does not include it (fit0),
+# and compare using a likelihood ratio test (LRT), carried out using the anova() function
+fit0 <-
+  glmer(
+    cbind(tot_dead, total - tot_dead) ~
+      treatment + (1 | hut) + (1 | sleeper),
+    family = binomial, data = df) 
+summary(fit0)
+anova(fit,fit0)
+#We consider a p value 'Pr(>Chisq)' <0.05 to indicate a signficant improvement in model fit
+
 #Here are a couple of ways to extract parameter values from the fitted model
 fit@beta
 coef(summary(fit))["(Intercept)", "Estimate"]
@@ -171,8 +184,9 @@ coef(summary(fit))["treatmentN1u", "Estimate"]
 
 #Convert to mortality scale
 #InvLogit(coef(summary(fit))["treatmentN1u", "Estimate"])
+InvLogit(coef(summary(fit))["(Intercept)", "Estimate"])
 InvLogit(coef(summary(fit))["(Intercept)", "Estimate"] + coef(summary(fit))["treatmentN1u", "Estimate"])
-
+#InvLogit(coef(summary(fit))["(Intercept)", "Estimate"]+c(-1,1)*1.96*coef(summary(fit))["(Intercept)", "Std. Error"])
 #Add confidence intervals
 mortality_conf <- function(mod = fit, j = 2, btz = 0){
   if(j != 1){
@@ -259,6 +273,7 @@ mortality_summary(modX = fit_n)
 
 tapply(df$total, df$treatment, mean)
 
+#Is a poisson or negative binomial model better for these count data?
 fig.pois <- fitdist(df$total, "pois") # Poisson distr
 plot(fig.pois)
 fig.negbin <- fitdist(df$total, "nbinom") # negative binomial
@@ -273,7 +288,10 @@ getME(fit_nb, "glmer.nb.theta")
 coef(summary(fit_nb))["(Intercept)", "Estimate"]
 coef(summary(fit_nb))["treatmentN1u", "Std. Error"]
 
-#Number of mosquitoes per night in huts with untreated N1 nets
+#Number of mosquitoes per night in huts with untreated nets
+exp(coef(summary(fit_nb))["(Intercept)", "Estimate"])
+
+#Number of mosquitoes per night in huts with unwashed N1 nets
 exp(coef(summary(fit_nb))["(Intercept)", "Estimate"] + coef(summary(fit_nb))["treatmentN1u", "Estimate"])
 
 #Percentage deterrence, based on the central estimates
@@ -326,12 +344,12 @@ summary(fit_nb2)
 ###################################################################################
 
 #####################################
-# relevel factors
+# make treatment a factor variable in R
 df$treatment <- as.factor(df$treatment)
 #check the levels
 levels(df$treatment)
 #relevel
-df$treatment <- relevel(df$treatment,"N1u") 
+df$treatment <- relevel(df$treatment,"N2u") 
 #check the levels again
 levels(df$treatment)
 #re-run regression model
@@ -342,7 +360,69 @@ fit <-
     family = binomial, data = df) 
 summary(fit)
 
+#Will return a value of one if N3u is superior to N2u (via Wald z test)
+if(coef(summary(fit))["treatmentN3u", "Pr(>|z|)"] < 0.05 &
+   coef(summary(fit))["treatmentN3u", "Estimate"] > 0){
+  1
+}else{
+  0
+}
 
+#Set up a LRT, to compare with Wald z test above
+#For simplicity let's just look at two trial arms
+df2 <- df[df$treatment=='N2u'|df$treatment=='N3u',]
+
+#Let's look at the 'full model', which assumes a fixed effect is needed (i.e.) mosquito
+#mortality is different across the two trial arms. On this smaller dataset, we've just included 
+#one of the random-effects, for simplicity
+fit2 <-
+  glmer(
+    cbind(tot_dead, total - tot_dead) ~
+      treatment + (1 | observation),
+    family = binomial, data = df2) 
+summary(fit2)
+
+#The simpler model assumes that the fixed effect is not needed
+fit3 <-
+  glmer(
+    cbind(tot_dead, total - tot_dead) ~
+      (1 | observation),
+    family = binomial, data = df2) 
+summary(fit3)
+#Compare the two models using the anova() function
+#This returns a p value for a chi-squared test (if the null hypothesis is rejected,
+#the more complicated model-fit2- is justified)
+anova(fit2,fit3)
+confint(fit2, method = "boot", nsim = 1000, parm = "beta_")
+
+#The test statistic in an LRT  is the change in the deviance (-2 times the loglikelihood). The 
+#p value was calculated from a chi-squared distribution (degrees of freedom equal to the 
+#difference in the number of parameters in the models). The profile() function evaluates the
+#change in the deviance vs each parameter in the model:
+trp <- profile(fit2, which = 'beta_')
+#The LRT statistic will follow a quadratic curve, with respect to each parameter, 
+#if the log-likehood function is quadratic.
+#This function plots the square of the LRT statistic, on the basis that it is easier to 
+#check whether a curve follows a straight line. To futher facilitate this, the function 
+#returns a signed squared root (to the left of the parameter estimate, the value is multiplied 
+#by minus 1).
+pl1 <- lattice::xyplot(trp)
+#The above quantity (indicated by the greek letter zeta) can be compared with the standard normal distribution N(0,1). We can use this
+#to generate a plot for the corresponding density function
+
+#We'll illustrate this for one of the parameters
+#First we extract the relevant data:
+dfr <- data.frame('p' = trp[trp$.par=='treatmentN3u',]$treatmentN3u, 
+                  'sl' = trp[trp$.par=='treatmentN3u',]$.zeta)
+#
+dfr$dens <- dnorm(dfr$sl,mean=0,sd=1)
+#Here's the plot, with the central estimate (dashed orange line) taken from the regression model
+pl2 <- ggplot(dfr, aes(x=p,y=dens)) + geom_line() + geom_point() + theme_classic() + 
+  xlab('Parameter N3u') + ylab('Probability Density') + 
+  geom_vline(xintercept = coef(summary(fit2))["treatmentN3u", "Estimate"],
+             color = 'orange', linetype = 'dashed', alpha = .5) + 
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size=11.5))
+plot_grid(pl1,pl2,nrow = 1, rel_widths = c(0.55,0.45),labels = c('A','B'))
 
 ###################################################################################
 #########       Section 6.Testing for non-inferiority       ######################
@@ -386,6 +466,7 @@ exp(coef(summary(fit_n))['netN3','Estimate'] + 1.96*coef(summary(fit_n))['netN3'
 ########  Section 7. Simulate trials to estimate statistical power      ###########
 ###################################################################################
 
+set.seed(1244)
 # First describe trial design
 
 latsq <-
