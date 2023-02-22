@@ -17,7 +17,7 @@ themeJDC <-
         legend.background = element_blank(),
         legend.key = element_blank(), axis.text = element_text(size = 10.95),
         axis.title = element_text(size=11.6),
-        legend.text = element_text(size = 10.7))
+        legend.text = element_text(size = 10.3))
 
 # Usually I make figures containing 6 panels from these data. The top row shows nightly data from 3 arms.
 # Often I choose to look at the control arm, and 1 ITN, both unwashed & washed. 
@@ -223,15 +223,14 @@ error_bar_prop <- function(dataa = df, arm = 'C', arm_title = 'Control',
 
 #However, deterrence only of interest if there're more mosquitoes in huts with untreated nets (compared to those with ITNs)
 #Check:
-#sum(df[df$treatment == 'C',]$total) - sum(df[df$treatment == 'N1u',]$total)
-#sum(df[df$treatment == 'C',]$total) - sum(df[df$treatment == 'N1w',]$total)
+#mean(df[df$treatment == 'C',]$total) - mean(df[df$treatment == 'N1u',]$total)
+#mean(df[df$treatment == 'C',]$total) - mean(df[df$treatment == 'N1w',]$total)
 #Normally, I only set 'deterr = 1' if both the above quantities are positive
 
 # Current issues: (i) Legend is a squeeze to fit in, saved pdf has to be quite big to accommodate!
-# (ii) Above calculation for deterrence only works if there're the same no. of data pts in each arm. But could be
-# modified, e.g. by using the mean. I think the same is true inside the function- percentages need to be adjusted to allow for
-# different numbers of data pts
-# (iii) Code in the function is v messy, I need to tidy!
+# (ii) Code in the function is v messy, I need to tidy!
+#Note: deterrence is calculated relative to arm1. If negative deterrence is found, it will be
+#set to zero, and the function will output a notification message
 
 bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
                 arm_label1 = 'Control', arm_label2 = 'ITN Unwashed',
@@ -241,8 +240,8 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     #
     dfc <- data.frame(
       group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
-      value = c(sum(dataa[dataa$treatment==arm1,]$unf_dead), sum(dataa[dataa$treatment==arm1,]$bf_dead),
-                sum(dataa[dataa$treatment==arm1,]$unf_live), sum(dataa[dataa$treatment==arm1,]$bf_live))
+      value = c(mean(dataa[dataa$treatment==arm1,]$unf_dead), mean(dataa[dataa$treatment==arm1,]$bf_dead),
+                mean(dataa[dataa$treatment==arm1,]$unf_live), mean(dataa[dataa$treatment==arm1,]$bf_live))
     )
     head(dfc)
     dfc$group <- ordered(dfc$group,
@@ -254,8 +253,8 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     
     dfVu <- data.frame(
       group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
-      value = c(sum(dataa[dataa$treatment==arm2,]$unf_dead), sum(dataa[dataa$treatment==arm2,]$bf_dead),
-                sum(dataa[dataa$treatment==arm2,]$unf_live), sum(dataa[dataa$treatment==arm2,]$bf_live))
+      value = c(mean(dataa[dataa$treatment==arm2,]$unf_dead), mean(dataa[dataa$treatment==arm2,]$bf_dead),
+                mean(dataa[dataa$treatment==arm2,]$unf_live), mean(dataa[dataa$treatment==arm2,]$bf_live))
     )
     head(dfVu)
     dfVu$group <- ordered(dfVu$group, 
@@ -266,8 +265,8 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     #
     dfVw <- data.frame(
       group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
-      value = c(sum(dataa[dataa$treatment==arm3,]$unf_dead), sum(dataa[dataa$treatment==arm3,]$bf_dead),
-                sum(dataa[dataa$treatment==arm3,]$unf_live),sum(dataa[dataa$treatment==arm3,]$bf_live))
+      value = c(mean(dataa[dataa$treatment==arm3,]$unf_dead), mean(dataa[dataa$treatment==arm3,]$bf_dead),
+                mean(dataa[dataa$treatment==arm3,]$unf_live),mean(dataa[dataa$treatment==arm3,]$bf_live))
     )
     head(dfVw)
     dfVw$group <- ordered(dfVw$group, 
@@ -322,8 +321,8 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     #Or, incorporate deterence in the bfi panel?
     dfc2 <- data.frame(
       group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive",'Deterred'),
-      value = c(sum(dataa[dataa$treatment==arm1,]$unf_dead), sum(dataa[dataa$treatment==arm1,]$bf_dead),
-                sum(dataa[dataa$treatment==arm1,]$unf_live),sum(dataa[dataa$treatment==arm1,]$bf_live),0)
+      value = c(mean(dataa[dataa$treatment==arm1,]$unf_dead), mean(dataa[dataa$treatment==arm1,]$bf_dead),
+                mean(dataa[dataa$treatment==arm1,]$unf_live),mean(dataa[dataa$treatment==arm1,]$bf_live),0)
     )
     head(dfc2)
     dfc2$net <- 'C'
@@ -331,9 +330,9 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     
     dfVu2 <- data.frame(
       group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive",'Deterred'),
-      value = c(sum(dataa[dataa$treatment==arm2,]$unf_dead), sum(dataa[dataa$treatment==arm2,]$bf_dead),
-                sum(dataa[dataa$treatment==arm2,]$unf_live),sum(dataa[dataa$treatment==arm2,]$bf_live),
-                sum(dataa[dataa$treatment==arm1,]$total) - sum(dataa[dataa$treatment==arm2,]$total))
+      value = c(mean(dataa[dataa$treatment==arm2,]$unf_dead), mean(dataa[dataa$treatment==arm2,]$bf_dead),
+                mean(dataa[dataa$treatment==arm2,]$unf_live),mean(dataa[dataa$treatment==arm2,]$bf_live),
+                mean(dataa[dataa$treatment==arm1,]$total) - mean(dataa[dataa$treatment==arm2,]$total))
     )
     if(dfVu2[dfVu2$group=='Deterred',]$value < 0){
       dfVu2[dfVu2$group=='Deterred',]$value = 0
@@ -345,9 +344,9 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
     
     dfVw2 <- data.frame(
       group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive",'Deterred'),
-      value = c(sum(dataa[dataa$treatment==arm3,]$unf_dead), sum(dataa[dataa$treatment==arm3,]$bf_dead),
-                sum(dataa[dataa$treatment==arm3,]$unf_live),sum(dataa[dataa$treatment==arm3,]$bf_live),
-                sum(dataa[dataa$treatment==arm1,]$total) - sum(dataa[dataa$treatment==arm3,]$total))
+      value = c(mean(dataa[dataa$treatment==arm3,]$unf_dead), mean(dataa[dataa$treatment==arm3,]$bf_dead),
+                mean(dataa[dataa$treatment==arm3,]$unf_live),mean(dataa[dataa$treatment==arm3,]$bf_live),
+                mean(dataa[dataa$treatment==arm1,]$total) - mean(dataa[dataa$treatment==arm3,]$total))
     )
     if(dfVw2[dfVw2$group=='Deterred',]$value < 0){
       dfVw2[dfVw2$group=='Deterred',]$value = 0
@@ -416,10 +415,10 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
     for(i in 1:l){
       dfc <- data.frame(
         group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive"),
-        value = c(sum(dataa[dataa$treatment==lu[i],]$unf_dead), 
-                  sum(dataa[dataa$treatment==lu[i],]$bf_dead),
-                  sum(dataa[dataa$treatment==lu[i],]$unf_live), 
-                  sum(dataa[dataa$treatment==lu[i],]$bf_live))
+        value = c(mean(dataa[dataa$treatment==lu[i],]$unf_dead), 
+                  mean(dataa[dataa$treatment==lu[i],]$bf_dead),
+                  mean(dataa[dataa$treatment==lu[i],]$unf_live), 
+                  mean(dataa[dataa$treatment==lu[i],]$bf_live))
       )
       dfc$net <- lu[i]
       dfc$valuePC2 <- dfc$value / sum(dfc$value)
@@ -458,12 +457,12 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
     for(i in 1:l){
       dfc <- data.frame(
         group = c("Unfed Dead", "Fed Dead", "Unfed Alive","Fed Alive","Deterred"),
-        value = c(sum(dataa[dataa$treatment==lu[i],]$unf_dead), 
-                  sum(dataa[dataa$treatment==lu[i],]$bf_dead),
-                  sum(dataa[dataa$treatment==lu[i],]$unf_live), 
-                  sum(dataa[dataa$treatment==lu[i],]$bf_live),
-                  sum(dataa[dataa$treatment==lu[control_arm],]$total) - 
-                    sum(dataa[dataa$treatment==lu[i],]$total))
+        value = c(mean(dataa[dataa$treatment==lu[i],]$unf_dead), 
+                  mean(dataa[dataa$treatment==lu[i],]$bf_dead),
+                  mean(dataa[dataa$treatment==lu[i],]$unf_live), 
+                  mean(dataa[dataa$treatment==lu[i],]$bf_live),
+                  mean(dataa[dataa$treatment==lu[control_arm],]$total) - 
+                    mean(dataa[dataa$treatment==lu[i],]$total))
       )
       if(dfc[dfc$group=='Deterred',]$value < 0){
         dfc[dfc$group=='Deterred',]$value = 0

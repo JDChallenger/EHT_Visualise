@@ -27,15 +27,16 @@ InvLogit <- function(X){
 #######       Section 1. Load the data, and summarise it       ####################
 ###################################################################################
 
-#Random seed here. Then generate dataset.
+#Random seed here. 
 set.seed(12443)
+# Running this code will generate a simulated EHT dataset.
 source('sim_data_for_plot_function.R')
 
 # Alternatively, you could load a previously generated dataset. 
 # df <- readRDS('data_for_plot.rds')
 # Or use a real dataset of interest
 
-# Data is for a 7-arm trial, with one full rotation (343 data points)
+# Data in the simulated EHT is for a 7-arm trial, with one full rotation (343 data points)
 #Let's look at the data
 dim(df)
 head(df)
@@ -64,19 +65,20 @@ mx <- max(df[df$treatment=='C'|df$treatment=='N1u'|df$treatment=='N1w',]$total)
 #In the argument of the function, variable 'arm' needs to match the trial arm in the dataset
 #'arm_title' is the name you want to appear on the plot-- you can choose anything you like!
 #'mx' gives the range of counts that are used for the plot (as above)
-#'pieX' gives the x position of the pie chart. You may wish to move this, if it blocks some of the bars
+#'pieX' gives the x position of the pie chart (in the range [0,1]). You may wish to move this, if it blocks some of the bars
+#Similarly, 'pieY' gives the y position (in the range [0,1])
 #You can add the option 'pie = 0' to generate the plot without the pie chart
 pnel1(dataa = df, arm = 'C', arm_title = 'Control', mx=mx, pieX = 0.15, pie = 0)
 pnel1(dataa = df, arm = 'N1u', arm_title = 'ITN (Unwashed)', mx=mx, pieX = 0.15)
 pnel1(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)', mx=mx, pieX = 0.15)
 
-#In two of the panels, we'll estimate the nightly mortality.
+#Next, we generate two panels that estimate the nightly mortality in a particular trial arm.
 #'arm' and 'arm_title' are defined as above
 #By default, the data points will be coloured per hut. If you don't have hut information 
 #you can turn this off by setting hut_info = 0
 #A legend for 'hut' can be added with the option 'leg_end=1'
 error_bar_prop(dataa = df, arm = 'N1u', arm_title = 'ITN (Unwashed)', hut_info = 1)
-error_bar_prop(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)', hut_info = 1)
+error_bar_prop(dataa = df, arm = 'N1w', arm_title = 'ITN (Washed)', hut_info = 1, leg_end = 1)
 
 #The remaining plot will summarise the blood feeding rates in each arm. 
 #If we see signs of deterrence in the data, we can also visualise this
@@ -88,8 +90,7 @@ tapply(df$total, df$treatment, mean)
 # is greater than both ITN arms included in the plot.
 # Select deterr = 1 to view deterrence
 # Note: deterrence is calculated relative to arm1, which here is the untreated control
-# Note: at the moment, the deterrence calculation only works if all trial arms have the same 
-# number of data pts. We'll try to fix this
+# If negative deterrence is found, it will be set to zero, and the function will output a notification message
 
 bfi(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w',
     arm_label1 = 'Control', arm_label2 = 'ITN Unwashed', arm_label3 = 'ITN Washed')
@@ -135,11 +136,11 @@ bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names, text_size = 4.7)
 #control arm (you can view the order of the arms by running the
 # command 'unique(df$treatment'). In other words, deterrence is calculated relative to the number of 
 #mosquitoes found in this arm. If this is not the case, you can instruct the function
-#using the argument 'control_arm'.
+#using the additional argument 'control_arm'.
 
 #For example, if the control arm is the arm number 3:
 bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names,
-             text_size = 4.7, control_arm = 1)
+             text_size = 4.7, control_arm = 3)
 #Note that if deterrence is negative, it is set to zero by this function
 
 #You can include this figure in the six-panel plot above, but it could be a bit 
@@ -175,10 +176,10 @@ fit0 <-
     family = binomial, data = df) 
 summary(fit0)
 anova(fit,fit0)
-#We consider a p value 'Pr(>Chisq)' <0.05 to indicate a signficant improvement in model fit
+#We consider a p value 'Pr(>Chisq)' <0.05 to indicate a significant improvement in model fit
 
 #Here are a couple of ways to extract parameter values from the fitted model
-fit@beta
+fit@beta #Estimates for the fixed effects (on the log-odds scale)
 coef(summary(fit))["(Intercept)", "Estimate"]
 coef(summary(fit))["treatmentN1u", "Estimate"]
 
@@ -187,8 +188,15 @@ coef(summary(fit))["treatmentN1u", "Estimate"]
 InvLogit(coef(summary(fit))["(Intercept)", "Estimate"])
 InvLogit(coef(summary(fit))["(Intercept)", "Estimate"] + coef(summary(fit))["treatmentN1u", "Estimate"])
 #InvLogit(coef(summary(fit))["(Intercept)", "Estimate"]+c(-1,1)*1.96*coef(summary(fit))["(Intercept)", "Std. Error"])
+
 #Add confidence intervals
-mortality_conf <- function(mod = fit, j = 2, btz = 0){
+#This function will output the mortality estimate for one trial arm 
+# (chose the trial arm using argument 'j', trial arms are ordered as per
+# the output shown in 'summary(fit)'), and give
+#the 95% confidence intervals. If you just want the output to be numeric,
+# you can set 'num_only=1'. Otherwise the output will be formed as a string of 
+# characters, which will include the name of the trial arm
+mortality_conf <- function(mod = fit, j = 2, num_only = 0){
   if(j != 1){
     rho <- vcov(mod)[1,j]/(sqrt(vcov(mod)[1,1])*sqrt(vcov(mod)[j,j]))
     #Standard deviation for the difference in the fixed effects
@@ -201,7 +209,7 @@ mortality_conf <- function(mod = fit, j = 2, btz = 0){
     ctl <- round(InvLogit(central),3)
     upp <- round(InvLogit(central + 1.96*sigma),3)
     low <- round(InvLogit(central - 1.96*sigma),3)
-    if(btz==0){
+    if(num_only==0){
       return(paste0(nz,': ',ctl,' [',low,' ,',upp,']'))
     }else{
       return(c(ctl,low,upp))
@@ -223,7 +231,8 @@ mortality_conf <- function(mod = fit, j = 2, btz = 0){
 }
 mortality_conf(mod = fit, j = 1)
 
-#Make a function that'll work out how many trial arms you have and calculate everything
+#Make a function that'll work out how many trial arms you have and calculate 
+#the mortality estimates & confidence intervals for all arms
 mortality_summary <- function(modX){
   l <- length(modX@beta)
   dfe <- data.frame('Arm' = as.character(),
@@ -242,6 +251,12 @@ mortality_summary <- function(modX){
   return(dfe)
 }
 mortality_summary(modX = fit)
+
+#Note: the functions above assume that the uncertainty in the fixed effect estimates is normally distributed
+# You can check this by performing a bootstrap. However, this will be much slower (can take 30 minutes or longer).
+#If you are preparing results for a presentation or publication, it could be worth checking the
+# confidence intervals using this method. 
+confint(fit, method = "boot", nsim = 750, parm = "beta_")
   
 #What if we wanted to group data points by type of insecticide, and ignore washing effects?
 #make new variable
@@ -276,7 +291,6 @@ mortality_summary(modX = fit_n)
 
 tapply(df$total, df$treatment, mean)
 
-
 #Let's see which distribution better describes the count data- a Poisson distribution
 #or a negative binomial distribution
 fig.pois <- fitdist(df$total, "pois") # Poisson distribution
@@ -287,7 +301,10 @@ plot(fig.negbin)
 # Hence a better fit
 gofstat(list(fig.pois,fig.negbin), fitnames = c("Poisson", "Negative Binomial"))
 
-fit_nb <- glmer.nb(total ~ treatment + (1|sleeper), data = df)
+#Note: often the hut or sleeper random effect doesn't explain much variation in the data
+# (indicating by the variance of the random effect being very close to 0).
+# You may wish to drop one or both of these
+fit_nb <- glmer.nb(total ~ treatment + (1|hut), data = df)
 summary(fit_nb)
 
 #Dispersion parameter
@@ -306,8 +323,9 @@ exp(coef(summary(fit_nb))["(Intercept)", "Estimate"] + coef(summary(fit_nb))["tr
 #TO DO: a function for the deterrence. Can you do all of them at once?
 100*(1-exp(coef(summary(fit_nb))[1,1] + coef(summary(fit_nb))[2,1])/exp(coef(summary(fit_nb))[1,1]))
 
-#Techincally this isn't deterrence!!
-deterrence_conf <- function(mod= fit_nb, j = 2){ 
+#Mosquito counts in each arm (corrected for random effects). 
+#If you don't have random effects, you can just use tapply(), as above
+mosq_counts <- function(mod= fit_nb, j = 2){ 
   if(j!=1){
     rhoX <- vcov(mod)[1,j]/(sqrt(vcov(mod)[1,1])*sqrt(vcov(mod)[j,j]))
     #Standard deviation for the sum in the fixed effects
@@ -325,18 +343,125 @@ deterrence_conf <- function(mod= fit_nb, j = 2){
     
     return(paste0(nz,': ',ctl,' [',low,', ',upp,']'))
   }else{
-    print('Deterrence cannot be calculated for the control arm')
+    #Change name of intercept category if you need to
+    nz <- 'Untreated Control' #colnames(mod@pp$X)[1]
+    #central
+    ct <- coef(summary(mod))[1,1]
+    ctl <- round(exp(ct),3)
+    
+    upp <- round(exp(ct + 1.96*coef(summary(mod))[1,2]),3)
+    low <- round(exp(ct - 1.96*coef(summary(mod))[1,2]),3)
+    
+    return(paste0(nz,': ',ctl,' [',low,', ',upp,']'))
   }
 }
-deterrence_conf(mod = fit_nb, j = 2)
-deterrence_conf(mod = fit_nb, j = 3)
+mosq_counts(mod = fit_nb, j = 2)
+mosq_counts(mod = fit_nb, j = 3)
 
-sapply(2:7, deterrence_conf, mod = fit_nb)
+#Mosquito counts in all 7 arms
+sapply(1:7, mosq_counts, mod = fit_nb)
+
+## Calculate % deterrence. Note: I'm not sure the confidence intervals are precisely right here..
+deterrence <- function(mod = fit_nb, j = 2){ 
+  if(j!=1){
+    rhoX <- vcov(mod)[1,j]/(sqrt(vcov(mod)[1,1])*sqrt(vcov(mod)[j,j]))
+    #Standard deviation for the sum in the fixed effects
+    sigmaX <- sqrt(vcov(mod)[1,1] + vcov(mod)[j,j] + 
+                     2 * rhoX *(sqrt(vcov(mod)[1,1]) *(sqrt(vcov(mod)[j,j]))))
+    #Extract name(s)
+    nz <- colnames(mod@pp$X)[j]
+    
+    #central
+    ct <- coef(summary(mod))[1,1] + coef(summary(mod))[j,1]
+    ctl <- round(exp(ct),3)
+    
+    #upp <- round(exp(ct + 1.96*sigmaX),3)
+    #low <- round(exp(ct - 1.96*sigmaX),3)
+    
+    ctl_pc <- round(100*(1 - exp(ct) / exp(coef(summary(mod))[1,1])),2)
+    upp_pc <- round(100*(1 - exp(ct - 1.96*sigmaX)  / exp(coef(summary(mod))[1,1])),2)
+    low_pc <- round(100*(1 - exp(ct + 1.96*sigmaX)  / exp(coef(summary(mod))[1,1])),2)
+    
+    return(paste0(nz,' deterrence: ',ctl_pc,'% [',low_pc,'%, ',upp_pc,'%]'))
+  }else{
+    return('Deterrence not calculated for intercept category')
+  }
+}
+deterrence()
+sapply(1:7, deterrence, mod = fit_nb)
 
 
 #Note: we have to use a function from another package (MASS), if we wish to fit a model without random effects
 fit_nb2 <- MASS::glm.nb(total ~ treatment, data=df)
 summary(fit_nb2)
+fit_nb2$theta # This is the dispersion parameter fitted for this model
+
+#And the notation for extracting the values is slightly different. We will have to 
+#modify the functions above
+
+#Note: this should produce very similar output to the tapply() function we used above
+mosq_counts2 <- function(mod= fit_nb, j = 2){ 
+  if(j!=1){
+    rhoX <- summary(mod)$cov.unscaled[1,j]/(sqrt(summary(mod)$cov.unscaled[1,1]) * sqrt(summary(mod)$cov.unscaled[j,j]))
+    #Standard deviation for the sum in the fixed effects
+    sigmaX <- sqrt(summary(mod)$cov.unscaled[1,1] + summary(mod)$cov.unscaled[j,j] + 
+                     2*rhoX*sqrt(summary(mod)$cov.unscaled[1,1])*sqrt(summary(mod)$cov.unscaled[j,j]))
+    #Extract name(s)
+    nz <- fit_nb2$xlevels[1]$treatment[j]
+    
+    #central
+    ct <- coef(summary(mod))[1,1] + coef(summary(mod))[j,1]
+    ctl <- round(exp(ct),3)
+    
+    upp <- round(exp(ct + 1.96*sigmaX),3)
+    low <- round(exp(ct - 1.96*sigmaX),3)
+    
+    return(paste0(nz,': ',ctl,' [',low,', ',upp,']'))
+  }else{
+    #Change name of intercept category if you need to
+    nz <- 'Untreated Control' #colnames(mod@pp$X)[1]
+    #central
+    ct <- coef(summary(mod))[1,1]
+    ctl <- round(exp(ct),3)
+    
+    upp <- round(exp(ct + 1.96*coef(summary(mod))[1,2]),3)
+    low <- round(exp(ct - 1.96*coef(summary(mod))[1,2]),3)
+    
+    return(paste0(nz,': ',ctl,' [',low,', ',upp,']'))
+  }
+}
+mosq_counts2(mod = fit_nb2, j = 2)
+mosq_counts2(mod = fit_nb2, j = 3)
+#Mosquito counts in all 7 arms
+sapply(1:7, mosq_counts2, mod = fit_nb2)
+
+deterrence2 <- function(mod = fit_nb2, j = 2){ 
+  if(j!=1){
+    rhoX <- summary(mod)$cov.unscaled[1,j]/(sqrt(summary(mod)$cov.unscaled[1,1]) * sqrt(summary(mod)$cov.unscaled[j,j]))
+    #Standard deviation for the sum in the fixed effects
+    sigmaX <- sqrt(summary(mod)$cov.unscaled[1,1] + summary(mod)$cov.unscaled[j,j] + 
+                                2*rhoX*sqrt(summary(mod)$cov.unscaled[1,1])*sqrt(summary(mod)$cov.unscaled[j,j]))
+    #Extract name(s)
+    nz <- fit_nb2$xlevels[1]$treatment[j]
+    
+    #central
+    ct <- coef(summary(mod))[1,1] + coef(summary(mod))[j,1]
+    ctl <- round(exp(ct),3)
+    
+    #upp <- round(exp(ct + 1.96*sigmaX),3)
+    #low <- round(exp(ct - 1.96*sigmaX),3)
+    
+    ctl_pc <- round(100*(1 - exp(ct) / exp(coef(summary(mod))[1,1])),2)
+    upp_pc <- round(100*(1 - exp(ct - 1.96*sigmaX)  / exp(coef(summary(mod))[1,1])),2)
+    low_pc <- round(100*(1 - exp(ct + 1.96*sigmaX)  / exp(coef(summary(mod))[1,1])),2)
+    
+    return(paste0(nz,' deterrence: ',ctl_pc,'% [',low_pc,'%, ',upp_pc,'%]'))
+  }else{
+    return('Deterrence not calculated for intercept category')
+  }
+}
+deterrence2()
+sapply(1:7, deterrence2, mod = fit_nb2)
 
 #And the notation for extracting the values is slightly different. But we won't use this during this week
 # cor <- summary(fit_nb2)$cov.unscaled[1,2]/(sqrt(summary(fit_nb2)$cov.unscaled[1,1]) * sqrt(summary(fit_nb2)$cov.unscaled[2,2]))
@@ -473,6 +598,10 @@ exp(coef(summary(fit_n))['netN3','Estimate'] + 1.96*coef(summary(fit_n))['netN3'
 ###################################################################################
 ########  Section 7. Simulate trials to estimate statistical power      ###########
 ###################################################################################
+
+#Note: here we show how to set up a scenario from scratch, i.e. how to define the required functions yourself.
+# There are other R functions in the Github repository which will do the work for you, if you prefer.
+# See 'power_calculator_user_script.R' for more details
 
 set.seed(1244)
 # First describe trial design
