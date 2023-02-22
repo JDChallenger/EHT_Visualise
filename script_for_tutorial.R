@@ -463,15 +463,6 @@ deterrence2 <- function(mod = fit_nb2, j = 2){
 deterrence2()
 sapply(1:7, deterrence2, mod = fit_nb2)
 
-#And the notation for extracting the values is slightly different. But we won't use this during this week
-# cor <- summary(fit_nb2)$cov.unscaled[1,2]/(sqrt(summary(fit_nb2)$cov.unscaled[1,1]) * sqrt(summary(fit_nb2)$cov.unscaled[2,2]))
-# sig <- sqrt(summary(fit_nb2)$cov.unscaled[1,1] + summary(fit_nb2)$cov.unscaled[2,2] + 
-#               2*cor*sqrt(summary(fit_nb2)$cov.unscaled[1,1])*sqrt(summary(fit_nb2)$cov.unscaled[2,2]))
-# ctl2 <- exp(fit_nb2$coefficients[1] + fit_nb2$coefficients[2])[1]
-# upp2 <- exp(log(ctl2) + 1.96*sig)
-# low2 <- exp(log(ctl2) - 1.96*sig)
-# c(ctl2[[1]],low2[[1]],upp2[[1]])
-
 ###################################################################################
 #########       Section 5. Testing for superiority             ####################
 ###################################################################################
@@ -501,7 +492,13 @@ if(coef(summary(fit))["treatmentN3u", "Pr(>|z|)"] < 0.05 &
   0
 }
 
-#Set up a LRT, to compare with Wald z test above
+#Note: the remainder of section 5 was written in response to one of the reviewers of our article
+# They wanted more detail on whether the Wald test (the default
+# method of getting a p value out of a glmer model in the lme4 package)
+# was the best method to use. Here we show other methods. This is primarily of 
+# theoretical interest.
+
+#Set up a Likelihood Ratio Test, to compare with Wald z test above
 #For simplicity let's just look at two trial arms
 df2 <- df[df$treatment=='N2u'|df$treatment=='N3u',]
 
@@ -526,6 +523,7 @@ summary(fit3)
 #This returns a p value for a chi-squared test (if the null hypothesis is rejected,
 #the more complicated model-fit2- is justified)
 anova(fit2,fit3)
+#Could also check by bootstrapping confidence intervals, although this will be slower
 confint(fit2, method = "boot", nsim = 1000, parm = "beta_")
 
 #The test statistic in an LRT  is the change in the deviance (-2 times the loglikelihood). The 

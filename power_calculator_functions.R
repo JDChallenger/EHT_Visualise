@@ -10,8 +10,8 @@ InvLogit <- function(X){
   exp(X)/(1+exp(X))
 }
 #user-defined function
-repeat_fn <- function(sttr, repp){
-  bray <- rep(sttr[1],repp)
+repeat_fn <- function(sttr, repp, repC){
+  bray <- rep(sttr[1],repC)
   l <- length(sttr) - 1
   for(i in 1:l){
     bray <- c(bray,rep(sttr[i+1],repp))
@@ -142,16 +142,16 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
   return(mosdata)
 }
 
-simulate_trial_IRS <- function(trial_days, n_arms, rep_arms, mos_det = 0, meanMos,
+simulate_trial_IRS <- function(trial_days, n_arms, rep_IRS, rep_C,  mos_det = 0, meanMos,
                                dispMos = 1.5, responses, varO = 0.9){
-  if(meanMos < 0 | dispMos < 0 ){ #At the moment, we need at least 1 rotation
+  if(meanMos < 0 | dispMos < 0 ){ 
     print('Parameters for mosquito counts should be positive')
     return(-9)
   }
   
-  nhuts <- n_arms*rep_arms
-  aux <- repeat_fn(sttr = c('C',paste0('E',seq(1,n_arms-1))), repp = rep_arms)
-  aux_resp <- repeat_fn(sttr = mortalities_IRS, repp = rep_arms)
+  nhuts <- (n_arms-1)*rep_IRS + rep_C
+  aux <- repeat_fn(sttr = c('C',paste0('E',seq(1,n_arms-1))), repp = rep_IRS, repC = rep_C)
+  aux_resp <- repeat_fn(sttr = mortalities_IRS, repp = rep_arms, repC = rep_C)
   
   mosdata <-
     expand.grid(

@@ -106,10 +106,11 @@ t2 - t1
 
 ####################### EHTs involving IRS ############################## 
 # n_arms: how many trial arms (including untreated control) 
-# rep_arm: how many huts per product? (And do you need to repeat untreated control? Let's say yes for now)
-# Then the number of huts in the trial will be (n_arms * rep_arm). This'll be the same as the number of volunteers required
+# rep_IRS: how many huts per IRS product? 
+# rep_C: How many huts per untreated control?
+# Then the number of huts in the trial will be rep_C + (n_arms - 1 * rep_IRS). This'll be the same as the number of volunteers required
 
-#How many days will the trial last? (nday)
+#How many days will the trial last? (trial_days)
 #mortalities (or blood-feeding) in each arm
 mortalities_IRS <- c(0.10, 0.30, 0.50, 0.55)
 #blood_feeding_IRS <- c(0.50, 0.30, 0.30, 0.25)
@@ -129,7 +130,7 @@ mortalities_IRS <- c(0.10, 0.30, 0.50, 0.55)
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
 #As before, we need info on mosquito numbers.
 
-xd <- simulate_trial_IRS(n_arms = 4, rep_arms = 4, responses = mortalities_IRS,
+xd <- simulate_trial_IRS(n_arms = 4, rep_IRS = 4, rep_C = 2, responses = mortalities_IRS,
                   trial_days = 15, varO = 1, mos_det = 0, meanMos = 12, dispMos = 1.5)
 dim(xd)
 head(xd)
