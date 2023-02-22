@@ -1,6 +1,6 @@
 # EHT_Visualise
 
-The files in this folder can be used as a tutorial on how to visualise and analyse data from experimental hut trials. Some of the materials relate to the manuscript **Assessing the variability in experimental hut trials evaluating insecticide-treated nets against malaria vectors** (accepted for publication in *Current Research in Parasitology & Vector-Borne Diseases*). The materials in this repository can be used to:
+The files in this folder can be used as a tutorial on how to visualise and analyse data from experimental hut trials. Some of the materials relate to the [article](https://doi.org/10.1016/j.crpvbd.2023.100115) **Assessing the variability in experimental hut trials evaluating insecticide-treated nets against malaria vectors** (published in February 2023 in *Current Research in Parasitology & Vector-Borne Diseases*). The materials in this repository can be used to:
 
 1.  Visualise data from experimental hut trials.
 2.  Perform regression analyses on data from experimental hut trials
