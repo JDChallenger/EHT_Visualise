@@ -32,7 +32,7 @@ source('power_calculator_functions.R')
 ## How many nights should an ITN stay in a hut before the nets are rotated? (npw)
 
 #Expected behaviour in each arm (either for mosquito mortality, or blood-feeding inhibition)
-mortalities <- c(0.05, 0.05, 0.15, 0.25, 0.15, 0.30, 0.2) 
+mortalities <- c(0.05, 0.2, 0.15, 0.25, 0.15, 0.30, 0.2) 
 blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
 #Note: the length of this list should equal the number of trial arms
 #length(mortalities)==n_arms
@@ -54,7 +54,7 @@ blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
 ####################### End of ITN-specific parameters ##################
 
 #How many mosquitoes per night per hut? First we specify the mean number (meanMos) 
-#Should the mosquito counts be a constant ('deterministic', det=1), or be sampled from a
+#Should the mosquito counts be a constant value ('deterministic', det=1), or be sampled from a
 #negative binomial distn (det=0) with the given mean and
 #dispersion parameter (dispMos) ?
 
@@ -73,7 +73,7 @@ table(xc$sleeper)
 # with a dataset, and tell it what to test for.
 #Here's an example, using the dataset we've just generated above (xc)
 
-#is Arm #6 superior to Arm #4, in terms of mosquito mortality?
+#Is Arm #6 superior to Arm #4, in terms of mosquito mortality?
 #This function returns a value of 1 if the null hypothesis is rejected; otherwise,
 # it returns zero
 hypothesis_test(trial = 1, aoi = c(4,6), dataset = xc)
@@ -85,8 +85,8 @@ hypothesis_test(trial = 1, aoi = c(4,6), dataset = xc)
 # for which the null hypothesis is rejected.
 
 # This function can be slow to run, as a large number of trials need to be simulated
-# It may be possible to parallise the code, if you have a multicore machine
-# Running this command will tell you how many cores you can use
+# It may be possible to parallelise the code, if you have a computer with multiple cores.
+# Running this command (from the 'parallel' package) will tell you how many cores you can use
 detectCores()
 # To parallelise (i.e. speed up) this process requires different code for Mac & Windows
 #computers. Here are the options:
@@ -101,7 +101,8 @@ power_calculator_ITN(parallelise = 0, trial = 1, npw = 6, rotations = 1,
      dispMos = 2, aoi = c(4,6), responses = mortalities)
 t2 <- Sys.time()
 t2 - t1
-#system("say Just finished!")
+#system("say Just finished!") #On Mac, this command alerts you that the function has finished
+# I don't think this works on Windows, but you could look at the beepr package and use the function beepr::beep()
 
 
 ####################### EHTs involving IRS ############################## 
@@ -134,7 +135,7 @@ xd <- simulate_trial_IRS(n_arms = 4, rep_IRS = 4, rep_C = 2, responses = mortali
                   trial_days = 15, varO = 1, mos_det = 0, meanMos = 12, dispMos = 1.5)
 dim(xd)
 head(xd)
-table(xd$net)
+table(xd$net) #Note: for IRS, 'net' really means 'trial arm'. I will try to udpate these.
 table(xd$hut)
 table(xd$sleeper)
 xd[xd$hut==1,]
@@ -156,7 +157,14 @@ hypothesis_test(trial = 9, aoi = c(2,4), dataset = xd)
 
 t1 <- Sys.time()
 power_calculator_IRS(parallelise = 0, trial = 1, varO = 0.9, trial_days = 15,
-                     rep_arms = 4, nsim = 300, n_arms = 4, mos_det = 1, meanMos = 11, 
+                     rep_C = 2, rep_IRS = 4, nsim = 300, n_arms = 4, mos_det = 1, meanMos = 11, 
                  dispMos = 1.4, aoi = c(3,4), responses = mortalities_IRS)
 t2 <- Sys.time()
 t2 - t1
+#system("say Just finished!") #On Mac, this command alerts you that the function has finished
+# I don't think this works on Windows, but you could look at the beepr package and use the function beepr::beep()
+
+
+#How many simulations is enough? Depends how much precision you need. 
+#Let's look at the 95% CIs for the power estiamte
+binom.test(table(factor(simulations,c(1,0))))$conf.int

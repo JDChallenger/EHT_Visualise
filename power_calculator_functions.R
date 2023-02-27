@@ -467,7 +467,6 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){
     return('Check value of trial (analyses not carried out)')
   }
 }
-#test
 
 power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, varO = 0.9, 
                  nsim = 1000, n_arms, mos_det = 0, meanMos, dispMos = 1.5,
@@ -541,7 +540,7 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
 }
 
 power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400, 
-                             trial_days, n_arms, rep_arms, mos_det = 0, meanMos,
+                             trial_days, n_arms, rep_IRS, rep_C, mos_det = 0, meanMos,
                              dispMos = 1.5, aoi, responses){
   if(parallelise!=0 & parallelise!=1 & parallelise!=2){
     print('Operation was not executed. Parallelise must take a value of (i) 0 (code not parallelised); (ii) Parallelised for Windows; (iii) Parallilised for Mac. If in doubt, set to zero')
@@ -550,7 +549,7 @@ power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400,
   if(parallelise==0){
     sz <- lapply(1:nsim, function(...) hypothesis_test(trial = trial, aoi = aoi, 
                                           dataset = simulate_trial_IRS(trial_days = trial_days, n_arms = n_arms,
-                                            rep_arms = rep_arms, mos_det = mos_det, meanMos = meanMos, 
+                                             rep_IRS = rep_IRS, rep_C = rep_C, mos_det = mos_det, meanMos = meanMos, 
                                               dispMos = dispMos, responses = responses,varO = varO)))
   }
   if(parallelise==1){ # Under construction
@@ -558,7 +557,8 @@ power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400,
     
     n_armsY <- n_arms
     trial_daysY <- trial_days
-    rep_armsY <- rep_arms
+    rep_CY <- rep_C
+    rep_IRSY <- rep_IRS
     trialY <- trial
     aoiY <- aoi
     dispMosY <- dispMos
@@ -568,7 +568,8 @@ power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400,
     mos_detY <- mos_det
     
     cl <- makeCluster(ncores)
-    clusterExport(cl,'rep_armsY', envir = environment())
+    clusterExport(cl,'rep_CY', envir = environment())
+    clusterExport(cl,'rep_IRSY', envir = environment())
     clusterExport(cl,'trial_daysY', envir = environment())
     clusterExport(cl,'responsesY', envir = environment())
     clusterExport(cl,'varOY', envir = environment())
@@ -588,8 +589,9 @@ power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400,
       library("optimx")
     })
     sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
-                                                dataset = simulate_trial_IRS(n_arms = n_armsY, npw = npwY,
-                                                  rotations = rotationsY, mos_det = mos_detY, meanMos = meanMosY,
+                                                dataset = simulate_trial_IRS(n_arms = n_armsY, 
+                                                        rep_C = rep_CY, rep_IRS = rep_IRSY,
+                                                      mos_det = mos_detY, meanMos = meanMosY,
                                                     dispMos = dispMosY, responses = responsesY,
                                                      varO = varOY)))
     stopCluster(cl)
@@ -597,7 +599,8 @@ power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400,
   if(parallelise==2){
     ncores <- detectCores() - 1
     sz <- mclapply(1:nsim, function(...) hypothesis_test(trial = trial, aoi = aoi, 
-                                            dataset = simulate_trial_IRS(n_arms = n_arms, rep_arms = rep_arms, 
+                                            dataset = simulate_trial_IRS(n_arms = n_arms, 
+                                                  rep_C = rep_C, rep_IRS = rep_IRS,
                                               trial_days = trial_days, mos_det = mos_det, meanMos = meanMos, 
                                                 dispMos = dispMos, responses = responses,
                                                   varO = varO))) #add mc.cores = ncores?
