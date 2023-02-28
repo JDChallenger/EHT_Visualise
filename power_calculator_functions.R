@@ -34,11 +34,11 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
     rotations <- 1
     print('Trial simulated for rotations = 1')
   }
-  if(varO < 0 ){ #At the moment, we need at least 1 rotation
+  if(varO < 0 ){ #Reject negative variance for the random effect
     print('The variance of a random effect must be positive')
     return(-9)
   }
-  if(meanMos < 0 | dispMos < 0 ){ #At the moment, we need at least 1 rotation
+  if(meanMos < 0 | dispMos < 0 ){ #Mean & dispersion parameters must both be positive
     print('Parameters for mosquito counts should be positive')
     return(-9)
   }
@@ -73,17 +73,15 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
   mosdata$sleeper <- NA
   aux3 <- sample(1:7)
   
-  for(j in 1:n_arms){
-    mosdata[mosdata$hut==j,]$sleeper <- 
-      rep(c(aux3[seq_len(j-1)], aux3[j : n_arms]  ) ,npw)  
+  for(i in 1:n_arms){ # number of weeks for one rotation
+    aux4 <- c(aux3[c(i:n_arms)],aux3[seq_len(i-1)])
+    #print(aux4)
+    for(j in 1:npw){ #nights per week
+      mosdata[mosdata$week==i & mosdata$night==j,]$sleeper <- 
+        c(aux4[c(j:n_arms)],aux4[seq_len(j-1)])
+    }
   }
-  for(i in 1:n_arms){
-    #print(paste0('Treatment is: ',aux[i]))
-    mosdata2 <- mosdata[mosdata$net==aux[i],]
-    #print(table(mosdata2$hut))
-    #print(table(mosdata2$sleeper))
-    #print(table(mosdata2$week))
-  }
+  
   #Do we have rotation > 1? What if rotation > 2??
   if(rotations > 1){
     if(rotations <= 2){
@@ -101,7 +99,7 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
       dec <- rotations - intt - 1
       mosdataY <- mosdata
       mosdataZ <- mosdata
-      for(j in 1:floor(intt)){
+      for(j in 1:intt){
         mosdataY$day <- mosdataZ$day + max(mosdataZ$day)*j
         mosdataY$week <- mosdataZ$week + max(mosdataZ$week)*j
         mosdata <- rbind(mosdata, mosdataY)
@@ -115,6 +113,8 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
       #print(paste0('dimX is ',dim(mosdataX)[1]))
       mosdata <- rbind(mosdata,mosdataX)
     }
+  }else{
+    mosdata$day <- npw*(mosdata$week - 1) + mosdata$night
   }
   
   #Now make a unique identifier for each data point
@@ -151,7 +151,7 @@ simulate_trial_IRS <- function(trial_days, n_arms, rep_IRS, rep_C,  mos_det = 0,
   
   nhuts <- (n_arms-1)*rep_IRS + rep_C
   aux <- repeat_fn(sttr = c('C',paste0('E',seq(1,n_arms-1))), repp = rep_IRS, repC = rep_C)
-  aux_resp <- repeat_fn(sttr = mortalities_IRS, repp = rep_arms, repC = rep_C)
+  aux_resp <- repeat_fn(sttr = responses, repp = rep_IRS, repC = rep_C)
   
   mosdata <-
     expand.grid(
@@ -581,7 +581,7 @@ power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400,
     clusterExport(cl,'trialY', envir = environment())
     clusterExport(cl,'hypothesis_test')
     clusterExport(cl,'simulate_trial_IRS')
-    #clusterExport(cl,'lazy') replace with name of this function???
+    clusterExport(cl,'repeat_fn')
     clusterExport(cl,'InvLogit')
     clusterEvalQ(cl, {
       library(lme4)
@@ -590,7 +590,7 @@ power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400,
     })
     sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
                                                 dataset = simulate_trial_IRS(n_arms = n_armsY, 
-                                                        rep_C = rep_CY, rep_IRS = rep_IRSY,
+                                                       rep_C = rep_CY, rep_IRS = rep_IRSY, trial_days = trial_daysY,
                                                       mos_det = mos_detY, meanMos = meanMosY,
                                                     dispMos = dispMosY, responses = responsesY,
                                                      varO = varOY)))
@@ -606,7 +606,7 @@ power_calculator_IRS <- function(parallelise = 0, trial, varO = .9, nsim = 400,
                                                   varO = varO))) #add mc.cores = ncores?
   }
   mm <- unlist(sz)
-  print(paste0('Power Estimate: ',100*sum(mm)/length(mm),'%, 95% CI: [',
+  print(paste0('Power Estimate: ',100*round(sum(mm)/length(mm),3),'%, 95% CI: [',
                100*round(binom.test(table(factor(mm,c(1,0))))$conf.int[1],3),',',
                100*round(binom.test(table(factor(mm,c(1,0))))$conf.int[2],3),']'))
   return(c(100*sum(mm)/length(mm),100*binom.test(table(factor(mm,c(1,0))))$conf.int[1],

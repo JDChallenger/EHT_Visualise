@@ -62,12 +62,28 @@ blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
 
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
 xc <- simulate_trial_ITN(n_arms = 7, npw = 6, responses = mortalities,
-               varO = 0.9, mos_det = 0, meanMos = 10, dispMos = 1)
+               varO = 0.9, rotations = 1, mos_det = 0, meanMos = 10, dispMos = 1)
 dim(xc)
 head(xc)
 table(xc$net)
 table(xc$hut)
 table(xc$sleeper)
+hist(xc$n)
+#We can calculate the mean mortality in each arm like this:
+tapply(xc$response/xc$n, xc$net, mean, na.rm = T)
+
+#The sleepers should rotate round the different huts and arms
+#Note: might not be exactly equal for trials with incomplete rotations
+table(xc[xc$net=='C',]$sleeper)
+table(xc[xc$net=='E2',]$sleeper)
+table(xc[xc$hut==2,]$sleeper)
+
+#Check how many days this trial took (note: doesn't include rest days)
+max(xc$day) 
+
+#Note: there is also a variable called 'night' in the dataset- this just 
+#denotes the day in a given week i.e. it takes a value between 1 and 'npw'
+
 
 ### Another function performs the hypothesis testing. We have to provide the function
 # with a dataset, and tell it what to test for.
@@ -95,6 +111,12 @@ detectCores()
 # parallelise = 1; Parallise code for Windows
 # parallelise = 2; Parallise code for Mac OS
 
+# The function power_calculator_ITN(...) will return (i) A printed statement of the power estimate & 
+# associated 95% confidence intervals (ii) a vector of three numbers: the power estimate, the lower 
+# confidence interval, and the upper confidence interval. The latter is more useful if you want to calculate
+# how power varies with (e.g.) the average number of mosquitoes per hut per night (meanMos). We'll 
+# show an example of this in the IRS section below.
+
 t1 <- Sys.time()
 power_calculator_ITN(parallelise = 0, trial = 1, npw = 6, rotations = 1, 
      nsim = 100, n_arms = 7, mos_det = 1, meanMos = 12, varO = .9, 
@@ -106,6 +128,7 @@ t2 - t1
 
 
 ####################### EHTs involving IRS ############################## 
+
 # n_arms: how many trial arms (including untreated control) 
 # rep_IRS: how many huts per IRS product? 
 # rep_C: How many huts per untreated control?
@@ -113,7 +136,7 @@ t2 - t1
 
 #How many days will the trial last? (trial_days)
 #mortalities (or blood-feeding) in each arm
-mortalities_IRS <- c(0.10, 0.30, 0.50, 0.55)
+mortalities_IRS <- c(0.10, 0.30, 0.50, 0.44)
 #blood_feeding_IRS <- c(0.50, 0.30, 0.30, 0.25)
 
 #### MEASURING MORTALITY
@@ -155,16 +178,49 @@ hypothesis_test(trial = 9, aoi = c(2,4), dataset = xd)
 # parallelise = 1; Parallise code for Windows
 # parallelise = 2; Parallise code for Mac OS
 
+# The function power_calculator_IRS(...) will return (i) A printed statement of the power estimate & 
+# associated 95% confidence intervals (ii) a vector of three numbers: the power estimate, the lower 
+# confidence interval, and the upper confidence interval. The latter is more useful if you want to calculate
+# how power varies with (e.g.) the average number of mosquitoes per hut per night (meanMos). We'll 
+# show an example of this below.
+
 t1 <- Sys.time()
-power_calculator_IRS(parallelise = 0, trial = 1, varO = 0.9, trial_days = 15,
+power_calculator_IRS(parallelise = 0, trial = 9, varO = 0.9, trial_days = 15,
                      rep_C = 2, rep_IRS = 4, nsim = 300, n_arms = 4, mos_det = 1, meanMos = 11, 
-                 dispMos = 1.4, aoi = c(3,4), responses = mortalities_IRS)
+                 dispMos = 1.4, aoi = c(2,4), responses = mortalities_IRS)
 t2 <- Sys.time()
 t2 - t1
 #system("say Just finished!") #On Mac, this command alerts you that the function has finished
 # I don't think this works on Windows, but you could look at the beepr package and use the function beepr::beep()
 
-
 #How many simulations is enough? Depends how much precision you need. 
-#Let's look at the 95% CIs for the power estiamte
-binom.test(table(factor(simulations,c(1,0))))$conf.int
+
+#Finally, let's vary meanMos and see how this influences the power
+
+av_mosquitoes <- seq(3,23,4) # values to use
+store_power <- rep(0,length(av_mosquitoes)) # vector to hold power estimates
+store_ci1 <- rep(0,length(av_mosquitoes)) # vector to hold lower CI
+store_ci2 <- rep(0,length(av_mosquitoes)) # vector to hold upper CI
+
+#Make a loop: each time we vary meanMos
+for(j in 1:length(av_mosquitoes)){
+  xx <- power_calculator_IRS(parallelise = 0, trial = 9, varO = 0.9, trial_days = 15,
+                             rep_C = 2, rep_IRS = 4, nsim = 400, n_arms = 4, mos_det = 1, meanMos = av_mosquitoes[j], 
+                             dispMos = 1.4, aoi = c(2,4), responses = mortalities_IRS)
+  store_power[j] <- xx[1]
+  store_ci1[j] <- xx[2]
+  store_ci2[j] <- xx[3]
+}
+
+library(ggplot2) # We'll use ggplot2 to look at the output
+
+#Make a data.frame
+data_power <- data.frame('mosquitoes' = av_mosquitoes, 'power' = store_power,
+                         'ci1' = store_ci1, 'ci2' = store_ci2)
+ggplot(data_power) + geom_point(aes(x = mosquitoes, y = power)) + theme_classic() +
+  xlab('Mean no. of mosquitoes') + ylab('Study Power (%)') + ylim(c(0,100)) +
+  geom_errorbar(aes(x = mosquitoes, ymin = ci1, ymax = ci2)) + 
+  geom_hline(yintercept = 80, color = 'orange') # orange line indicates 80% power
+
+
+
