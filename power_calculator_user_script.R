@@ -1,3 +1,5 @@
+#Files available from: https://github.com/JDChallenger/EHT_Visualise
+
 source('power_calculator_functions.R')
 
 #####################################################
@@ -29,7 +31,7 @@ source('power_calculator_functions.R')
 
 #How many trial arms in total? (n_arms)
 
-## How many nights should an ITN stay in a hut before the nets are rotated? (npw)
+## How many nights should an ITN stay in a hut before the nets are rotated? ('npw' or nights per week)
 
 #Expected behaviour in each arm (either for mosquito mortality, or blood-feeding inhibition)
 mortalities <- c(0.05, 0.2, 0.15, 0.25, 0.15, 0.30, 0.2) 
