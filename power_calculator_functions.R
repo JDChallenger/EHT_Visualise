@@ -468,16 +468,17 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){
   }
 }
 
+#Add NIM?
 power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, varO = 0.9, 
                  nsim = 1000, n_arms, mos_det = 0, meanMos, dispMos = 1.5,
-                 aoi, responses){
+                 aoi, responses, NIM = 0.7){
   if(parallelise!=0 & parallelise!=1 & parallelise!=2){
     print('Operation was not executed. Parallelise must take a value of (i) 0 (code not parallelised); (ii) Parallelised for Windows; (iii) Parallilised for Mac. If in doubt, set to zero')
     return(-9)
   }
   if(parallelise==0){
     sz <- lapply(1:nsim, function(...) hypothesis_test(trial = trial, aoi = aoi, 
-                                                          dataset = simulate_trial_ITN(n_arms = n_arms, npw = npw, 
+                                                    NIM = NIM, dataset = simulate_trial_ITN(n_arms = n_arms, npw = npw, 
                                                                                    rotations = rotations, mos_det = mos_det, meanMos = meanMos, 
                                                                                    dispMos = dispMos, responses = responses,
                                                                                    varO = varO)))
@@ -488,6 +489,7 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
     n_armsY <- n_arms
     trialY <- trial
     aoiY <- aoi
+    NIMY <- NIM
     dispMosY <- dispMos
     meanMosY <- meanMos
     varOY <- varO
@@ -506,6 +508,7 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
     clusterExport(cl,'dispMosY', envir = environment())
     clusterExport(cl,'n_armsY', envir = environment())
     clusterExport(cl,'aoiY', envir = environment())
+    clusterExport(cl,'NIMY', envir = environment())
     clusterExport(cl,'trialY', envir = environment())
     clusterExport(cl,'hypothesis_test')
     clusterExport(cl,'simulate_trial')
@@ -516,7 +519,7 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
       library(GLMMmisc)
       library("optimx")
     })
-    sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
+    sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY, NIM = NIMY,
                                                               dataset = simulate_trial_ITN(n_arms = n_armsY, npw = npwY,
                                                                                        rotations = rotationsY, mos_det = mos_detY, meanMos = meanMosY,
                                                                                        dispMos = dispMosY, responses = responsesY,
@@ -525,7 +528,7 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
   }
   if(parallelise==2){
     ncores <- detectCores() - 1
-    sz <- mclapply(1:nsim, function(...) hypothesis_test(trial = trial, aoi = aoi, 
+    sz <- mclapply(1:nsim, function(...) hypothesis_test(trial = trial, aoi = aoi, NIM = NIM,
                                                 dataset = simulate_trial_ITN(n_arms = n_arms, npw = npw, 
                                                               rotations = rotations, mos_det = mos_det, meanMos = meanMos, 
                                                                 dispMos = dispMos, responses = responses,
