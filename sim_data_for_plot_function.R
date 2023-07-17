@@ -38,6 +38,10 @@ for(i in 1:343){
   if(df$treatment[i]=='N1w' | df$treatment[i]=='N2w' | df$treatment[i]=='N3w'){
     ww <- 1
   }
+  ww2 <- 0 #indicator variable for N1
+  if(df$treatment[i]=='N1u' | df$treatment[i]=='N1w'){
+    ww2 <- 1
+  }
   
   if(tz == 0){
     df$unf_live[i] <- 0
@@ -50,7 +54,7 @@ for(i in 1:343){
       ntt <- 0
     }else ntt <- 1
     #How many died?
-    aux <- rbinom(1, tz, lgistic(-2.9 + 2.1*ntt - 0.6*ww + 0.15*df$sleeper[i] -0.2*df$hut[i] + rnorm(1,0,0.55)))
+    aux <- rbinom(1, tz, lgistic(-2.9 + 2.1*(ntt - 0.55*ww2) - 0.6*ww + 0.15*df$sleeper[i] -0.2*df$hut[i] + rnorm(1,0,0.55)))
     #How many blood fed?
     if(aux == 0){
       df$unf_dead[i] <- 0
