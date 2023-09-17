@@ -57,8 +57,8 @@ pnel1 <- function(dataa = df, arm = 'C', arm_title = 'Control', mx = mx,
                   leg_end = 0, legX = 0.8, legY = 0.8, pie = 1, pieX = 0.1, pieY = 0.56){
   dataCB5 <- dplyr::select(dataa, c('day','treatment','unf_live','unf_dead','bf_live','bf_dead'))
   
-  minn <- min(dataCB5$day)
-  maxx <- max(dataCB5$day)
+  minn <- min(dataCB5$day) - 0.5
+  maxx <- max(dataCB5$day) + 0.5
   
   dataCB5m <- melt(dataCB5, id.vars = c('day','treatment'))
   
