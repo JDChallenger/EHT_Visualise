@@ -59,8 +59,20 @@ blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
 #Should the mosquito counts be a constant value ('deterministic', det=1), or be sampled from a
 #negative binomial distn (det=0) with the given mean and
 #dispersion parameter (dispMos) ?
+#If you are drawing from a negative-binomial distribution, this code can
+#help you visualise the distribution's shape:
+meanMos <- 10
+dispMos <- 1
+hist(rnbinom(1000, mu = meanMos, size = dispMos))
 
-#random effect(s). Variance of the observation-level random effect (varO)
+#Variability present in the assay..Here this is described by a single 
+#observation-level random effect (varO), that represents overdispersion.
+#This is for simplicity: when calculating power, the regression model will be 
+#adjusted for day/hut/sleeper. From datasets of past EHTs, the value of varO can
+#be seen to vary widely (see Supplementary Table 1 of this paper:
+# https://doi.org/10.1016/j.crpvbd.2023.100115)
+# The default value of 0.9 (this is the variance of the random effect)
+# is a reasonable value to use, if you're unsure.
 
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
 xc <- simulate_trial_ITN(n_arms = 6, npw = 6, 
@@ -159,8 +171,8 @@ mortalities_IRS <- c(0.10, 0.40, 0.50, 0.47)
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
 #As before, we need info on mosquito numbers.
 
-xd <- simulate_trial_IRS(n_arms = 6, rep_IRS = 2, rep_C = 2, responses = mortalities_IRS,
-                  trial_days = 75, varO = 0.5, mos_det = 1, meanMos = 1.5, dispMos = 0.5)
+xd <- simulate_trial_IRS(n_arms = 4, rep_IRS = 2, rep_C = 2, responses = mortalities_IRS,
+                  trial_days = 50, varO = 0.5, mos_det = 1, meanMos = 6, dispMos = 1)
 dim(xd)
 head(xd)
 table(xd$net) #Note: for IRS, 'net' really means 'trial arm'. I will try to udpate these.
@@ -191,7 +203,7 @@ hypothesis_test(trial = 9, aoi = c(2,4), dataset = xd)
 
 t1 <- Sys.time()
 power_calculator_IRS(parallelise = 0, trial = 9, varO = 0.9, trial_days = 15,
-                     rep_C = 2, rep_IRS = 4, nsim = 300, n_arms = 4, mos_det = 1, meanMos = 11, 
+                     rep_C = 2, rep_IRS = 4, nsim = 300, n_arms = 4, mos_det = 0, meanMos = 11, 
                  dispMos = 1.4, aoi = c(2,4), responses = mortalities_IRS)
 t2 <- Sys.time()
 t2 - t1
