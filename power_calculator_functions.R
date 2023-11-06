@@ -71,7 +71,7 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
   }
   #table(mosdata$net, useNA = 'a')
   mosdata$sleeper <- NA
-  aux3 <- sample(1:7)
+  aux3 <- sample(1:n_arms) #was 7- a mistake??
   
   for(i in 1:n_arms){ # number of weeks for one rotation
     aux4 <- c(aux3[c(i:n_arms)],aux3[seq_len(i-1)])

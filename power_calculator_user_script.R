@@ -63,8 +63,9 @@ blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
 #random effect(s). Variance of the observation-level random effect (varO)
 
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
-xc <- simulate_trial_ITN(n_arms = 6, npw = 6, responses = c(0.5,0.5,0.5,0.425,0.55,0.33),
-               varO = 0.4, rotations = 3, mos_det = 0, meanMos = 29, dispMos = 1)
+xc <- simulate_trial_ITN(n_arms = 6, npw = 6, 
+                         responses = c(0.5,0.5,0.5,0.425,0.55,0.33),
+               varO = 0.9, rotations = 3, mos_det = 0, meanMos = 29, dispMos = 1)
 dim(xc)
 head(xc)
 table(xc$net)
@@ -72,9 +73,9 @@ table(xc$hut)
 table(xc$sleeper)
 hist(xc$n)
 #We can calculate the total number of mosquitoes in each arm like this: 
-tapply(xc$n, xc$net, mean, na.rm = T)
+tapply(xc$n, xc$net, mean, na.rm = F)
 #... and the total number of dead mosquitoes in each arm like this:
-tapply(xc$response, xc$net, mean, na.rm = T)
+tapply(xc$response, xc$net, mean, na.rm = F)
 
 #The sleepers should rotate round the different huts and arms
 #Note: might not be exactly equal for trials with incomplete rotations
@@ -123,8 +124,8 @@ detectCores()
 
 t1 <- Sys.time()
 power_calculator_ITN(parallelise = 0, trial = 3, npw = 6, rotations = 3, 
-     nsim = 1000, n_arms = 7, mos_det = 1, meanMos = 1.5, varO = .5, 
-     dispMos = .2, aoi = c(4,6), responses = c(0.5,0.5,0.5,0.5,0.5,0.5,0.5))
+     nsim = 1000, n_arms = 7, mos_det = 1, meanMos = 6, varO = .7, 
+     dispMos = .6, aoi = c(4,6), responses = c(0.5,0.5,0.5,0.5,0.5,0.5,0.5))
 t2 <- Sys.time()
 t2 - t1
 #system("say Just finished!") #On Mac, this command alerts you that the function has finished
@@ -140,7 +141,7 @@ t2 - t1
 
 #How many days will the trial last? (trial_days)
 #mortalities (or blood-feeding) in each arm
-mortalities_IRS <- c(0.10, 0.50, 0.50, 0.44)
+mortalities_IRS <- c(0.10, 0.40, 0.50, 0.47)
 #blood_feeding_IRS <- c(0.50, 0.30, 0.30, 0.25)
 
 #### MEASURING MORTALITY
@@ -208,7 +209,7 @@ store_ci2 <- rep(0,length(av_mosquitoes)) # vector to hold upper CI
 
 #Make a loop: each time we vary meanMos
 for(j in 1:length(av_mosquitoes)){
-  xx <- power_calculator_IRS(parallelise = 0, trial = 9, varO = 0.9, trial_days = 15,
+  xx <- power_calculator_IRS(parallelise = 2, trial = 9, varO = 0.9, trial_days = 25,
                              rep_C = 2, rep_IRS = 4, nsim = 400, n_arms = 4, mos_det = 1, meanMos = av_mosquitoes[j], 
                              dispMos = 1.4, aoi = c(2,4), responses = mortalities_IRS)
   store_power[j] <- xx[1]
