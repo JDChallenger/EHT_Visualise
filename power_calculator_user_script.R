@@ -31,7 +31,7 @@ source('power_calculator_functions.R')
 
 #How many trial arms in total? (n_arms)
 
-## How many nights should an ITN stay in a hut before the nets are rotated? ('npw' or nights per week)
+## 'npr', or 'Nights per round': How many nights should an ITN stay in a hut before the nets are rotated? (This parameter used to be called 'npr', or nights per week)
 
 #Expected behaviour in each arm (either for mosquito mortality, or blood-feeding inhibition)
 mortalities <- c(0.05, 0.2, 0.15, 0.25, 0.15, 0.30, 0.2) 
@@ -75,7 +75,7 @@ hist(rnbinom(1000, mu = meanMos, size = dispMos))
 # is a reasonable value to use, if you're unsure.
 
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
-xc <- simulate_trial_ITN(n_arms = 6, npw = 6, 
+xc <- simulate_trial_ITN(n_arms = 6, npr = 6, 
                          responses = c(0.5,0.5,0.5,0.425,0.55,0.33),
                varO = 0.9, rotations = 3, mos_det = 0, meanMos = 29, dispMos = 1)
 dim(xc)
@@ -99,7 +99,7 @@ table(xc[xc$hut==2,]$sleeper)
 max(xc$day) 
 
 #Note: there is also a variable called 'night' in the dataset- this just 
-#denotes the day in a given week i.e. it takes a value between 1 and 'npw'
+#denotes the day in a given week i.e. it takes a value between 1 and 'npr'
 
 
 ### Another function performs the hypothesis testing. We have to provide the function
@@ -135,7 +135,7 @@ detectCores()
 # show an example of this in the IRS section below.
 
 t1 <- Sys.time()
-power_calculator_ITN(parallelise = 0, trial = 3, npw = 6, rotations = 3, 
+power_calculator_ITN(parallelise = 0, trial = 3, npr = 6, rotations = 3, 
      nsim = 1000, n_arms = 7, mos_det = 1, meanMos = 6, varO = .7, 
      dispMos = .6, aoi = c(4,6), responses = c(0.5,0.5,0.5,0.5,0.5,0.5,0.5))
 t2 <- Sys.time()
