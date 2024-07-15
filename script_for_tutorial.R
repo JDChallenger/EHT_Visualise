@@ -222,7 +222,7 @@ mortality_conf <- function(mod = fit, j = 2, num_only = 0){
     ctl <- round(InvLogit(central),3)
     upp <- round(InvLogit(central + 1.96*sigma),3)
     low <- round(InvLogit(central - 1.96*sigma),3)
-    if(btz==0){
+    if(num_only==0){
       return(paste0(nz,': ',ctl,' [',low,' ,',upp,']'))
     }else{
       return(c(ctl,low,upp))
@@ -239,7 +239,7 @@ mortality_summary <- function(modX){
                     'Mortality' = as.numeric(),
                     'Lower_95pc_CI' = as.numeric(), 'Upper_95pc_CI' = as.numeric())
   for(i in 1:l){
-      aux <- mortality_conf(mod = modX, j = i, btz = 1)
+      aux <- mortality_conf(mod = modX, j = i, num_only = 1)
       dfb <- #data.frame('Arm' = ifelse(i==1,'Control',substring(colnames(modX@pp$X)[i],10)),
         data.frame('Arm' = ifelse(i==1,'Control',colnames(modX@pp$X)[i]),
                     'Mortality' = aux[1],

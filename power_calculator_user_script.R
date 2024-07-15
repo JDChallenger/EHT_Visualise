@@ -153,7 +153,7 @@ t2 - t1
 
 #How many days will the trial last? (trial_days)
 #mortalities (or blood-feeding) in each arm
-mortalities_IRS <- c(0.10, 0.40, 0.50, 0.47)
+mortalities_IRS <- c(0.10, 0.40, 0.50, 0.47,0.58)
 #blood_feeding_IRS <- c(0.50, 0.30, 0.30, 0.25)
 
 #### MEASURING MORTALITY
@@ -171,11 +171,11 @@ mortalities_IRS <- c(0.10, 0.40, 0.50, 0.47)
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
 #As before, we need info on mosquito numbers.
 
-xd <- simulate_trial_IRS(n_arms = 4, rep_IRS = 2, rep_C = 2, responses = mortalities_IRS,
-                  trial_days = 50, varO = 0.5, mos_det = 1, meanMos = 6, dispMos = 1)
+xd <- simulate_trial_IRS(n_arms = 5, rep_IRS = 2, rep_C = 1, responses = mortalities_IRS,
+                  trial_days = 90, varO = 0.8, mos_det = 0, meanMos = 14, dispMos = 1)
 dim(xd)
 head(xd)
-table(xd$net) #Note: for IRS, 'net' really means 'trial arm'. I will try to udpate these.
+table(xd$net) #Note: for IRS, 'net' really means 'trial arm'. I will try to update these.
 table(xd$hut)
 table(xd$sleeper)
 xd[xd$hut==1,]

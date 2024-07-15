@@ -207,7 +207,8 @@ error_bar_prop <- function(dataa = df, arm = 'C', arm_title = 'Control',
       geom_point(data = dataa[dataa$treatment== arm ,], 
                  aes(x=day, y = prop, size=total), color = 'magenta') + guides(size='none') +
       ylab("Proportion of mosquitoes killed") + ggtitle( arm_title) +
-      xlab("Study Day") + themeJDC + scale_y_continuous(breaks=c(0,.5,1)) + # + labs(color = "Hut")
+      xlab("Study Day") + themeJDC + 
+      scale_y_continuous(breaks=c(0,.5,1), limits = c(0,1)) + # + labs(color = "Hut")
       theme(legend.position = strr) + scale_x_continuous(limits = c(minn,maxx))
   }
 }
