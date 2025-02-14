@@ -121,16 +121,20 @@ unique(df$treatment)
 #Or, you can customise them. Note: the length of this list must match the number
 # of arms in the trial, and the order of trial arms should match that displayed by
 # running the command 'unique(df$treatment)'
-net_names <- c('Untreated Net', 'ITN1 (Unwashed)','ITN1 (Washed)','ITN2 (Unwashed)',
+net_names_new <- c('Untreated Net', 'ITN1 (Unwashed)','ITN1 (Washed)','ITN2 (Unwashed)',
                'ITN2 (Washed)','ITN3 (Unwashed)', 'ITN3 (Washed)')
 
 #Now let's see the plots that this function can produce
 
 #Without deterrence
+bfi_all_arms(dataa = df, deterr = 0, arm_labels = net_names_new)
+
+#Compare this to using the labels directly from the dataset:
 bfi_all_arms(dataa = df, deterr = 0, arm_labels = net_names)
+
 #Now, we include deterrence:
 #We can also vary the size of the labels with the option 'text_size'
-bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names, text_size = 4.7)
+bfi_all_arms(dataa = df, deterr = 1, arm_labels = net_names_new, text_size = 4.7)
 
 #Note: when calculating deterrence, this function expects the first arm to be the 
 #control arm (you can view the order of the arms by running the

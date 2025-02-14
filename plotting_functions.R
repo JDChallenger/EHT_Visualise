@@ -407,6 +407,7 @@ bfi <- function(dataa = df, arm1 = 'C', arm2 = 'N1u', arm3 = 'N1w', deterr = 0,
 bfi_all_arms <- function(dataa = df, deterr = 0,
                 arm_labels = net_names, text_size = 4.9, control_arm = 1){
 
+  print('Note: if you have updated the arm labels, check that the order matches that returned by running unique(df$treatment)')
   if(deterr==0){
     lu <- unique(dataa$treatment) #sort?
     #print(lu)
@@ -435,7 +436,7 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
     aux$group <- ordered(aux$group, 
                            levels = c('Fed Alive','Fed Dead','Unfed Dead','Unfed Alive'))
     sz <- text_size #text size of labels
-    bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=factor(net, level = net_names), fill = group, y=valuePC2),
+    bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=factor(net, level = lu), fill = group, y=valuePC2),
                                     position="stack", stat="identity") + 
       scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6])) +
       themeJDC + coord_flip() + theme(legend.position = 'bottom',
@@ -484,7 +485,7 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
       sz <- text_size
       
       #Feb 2025: looks like the levels of 'aux' are not inherited from the original data frame? 
-      bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=factor(net,level = net_names), fill = group, y=valuePC2),
+      bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=factor(net,level = lu), fill = group, y=valuePC2),
                                       position="stack", stat="identity") + 
         scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6],cb[7])) + 
         themeJDC + coord_flip() + theme(legend.position = 'bottom',
