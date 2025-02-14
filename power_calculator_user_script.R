@@ -1,3 +1,5 @@
+#Files available from: https://github.com/JDChallenger/EHT_Visualise
+
 source('power_calculator_functions.R')
 
 #####################################################
@@ -29,7 +31,7 @@ source('power_calculator_functions.R')
 
 #How many trial arms in total? (n_arms)
 
-## How many nights should an ITN stay in a hut before the nets are rotated? (npw)
+## 'npr', or 'Nights per round': How many nights should an ITN stay in a hut before the nets are rotated? (This parameter used to be called 'npr', or nights per week)
 
 #Expected behaviour in each arm (either for mosquito mortality, or blood-feeding inhibition)
 mortalities <- c(0.05, 0.2, 0.15, 0.25, 0.15, 0.30, 0.2) 
@@ -57,20 +59,35 @@ blood_feeding <- c(0.50, 0.30, 0.30, 0.25, 0.30, 0.30, 0.25)
 #Should the mosquito counts be a constant value ('deterministic', det=1), or be sampled from a
 #negative binomial distn (det=0) with the given mean and
 #dispersion parameter (dispMos) ?
+#If you are drawing from a negative-binomial distribution, this code can
+#help you visualise the distribution's shape:
+meanMos <- 10
+dispMos <- 1
+hist(rnbinom(1000, mu = meanMos, size = dispMos))
 
-#random effect(s). Variance of the observation-level random effect (varO)
+#Variability present in the assay..Here this is described by a single 
+#observation-level random effect (varO), that represents overdispersion.
+#This is for simplicity: when calculating power, the regression model will be 
+#adjusted for day/hut/sleeper. From datasets of past EHTs, the value of varO can
+#be seen to vary widely (see Supplementary Table 1 of this paper:
+# https://doi.org/10.1016/j.crpvbd.2023.100115)
+# The default value of 0.9 (this is the variance of the random effect)
+# is a reasonable value to use, if you're unsure.
 
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
-xc <- simulate_trial_ITN(n_arms = 7, npw = 6, responses = mortalities,
-               varO = 0.9, rotations = 1, mos_det = 0, meanMos = 10, dispMos = 1)
+xc <- simulate_trial_ITN(n_arms = 6, npr = 6, 
+                         responses = c(0.5,0.5,0.5,0.425,0.55,0.33),
+               varO = 0.9, rotations = 3, mos_det = 0, meanMos = 29, dispMos = 1)
 dim(xc)
 head(xc)
 table(xc$net)
 table(xc$hut)
 table(xc$sleeper)
 hist(xc$n)
-#We can calculate the mean mortality in each arm like this:
-tapply(xc$response/xc$n, xc$net, mean, na.rm = T)
+#We can calculate the total number of mosquitoes in each arm like this: 
+tapply(xc$n, xc$net, mean, na.rm = F)
+#... and the total number of dead mosquitoes in each arm like this:
+tapply(xc$response, xc$net, mean, na.rm = F)
 
 #The sleepers should rotate round the different huts and arms
 #Note: might not be exactly equal for trials with incomplete rotations
@@ -82,7 +99,7 @@ table(xc[xc$hut==2,]$sleeper)
 max(xc$day) 
 
 #Note: there is also a variable called 'night' in the dataset- this just 
-#denotes the day in a given week i.e. it takes a value between 1 and 'npw'
+#denotes the day in a given week i.e. it takes a value between 1 and 'npr'
 
 
 ### Another function performs the hypothesis testing. We have to provide the function
@@ -118,9 +135,9 @@ detectCores()
 # show an example of this in the IRS section below.
 
 t1 <- Sys.time()
-power_calculator_ITN(parallelise = 0, trial = 1, npw = 6, rotations = 1, 
-     nsim = 100, n_arms = 7, mos_det = 1, meanMos = 12, varO = .9, 
-     dispMos = 2, aoi = c(4,6), responses = mortalities)
+power_calculator_ITN(parallelise = 0, trial = 3, npr = 6, rotations = 3, 
+     nsim = 1000, n_arms = 7, mos_det = 1, meanMos = 6, varO = .7, 
+     dispMos = .6, aoi = c(4,6), responses = c(0.5,0.5,0.5,0.5,0.5,0.5,0.5))
 t2 <- Sys.time()
 t2 - t1
 #system("say Just finished!") #On Mac, this command alerts you that the function has finished
@@ -136,7 +153,7 @@ t2 - t1
 
 #How many days will the trial last? (trial_days)
 #mortalities (or blood-feeding) in each arm
-mortalities_IRS <- c(0.10, 0.30, 0.50, 0.44)
+mortalities_IRS <- c(0.10, 0.40, 0.50, 0.47,0.58)
 #blood_feeding_IRS <- c(0.50, 0.30, 0.30, 0.25)
 
 #### MEASURING MORTALITY
@@ -154,11 +171,11 @@ mortalities_IRS <- c(0.10, 0.30, 0.50, 0.44)
 #Before calculating power, let's simulate 1 trial, to check everything looks OK
 #As before, we need info on mosquito numbers.
 
-xd <- simulate_trial_IRS(n_arms = 4, rep_IRS = 4, rep_C = 2, responses = mortalities_IRS,
-                  trial_days = 15, varO = 1, mos_det = 0, meanMos = 12, dispMos = 1.5)
+xd <- simulate_trial_IRS(n_arms = 5, rep_IRS = 2, rep_C = 1, responses = mortalities_IRS,
+                  trial_days = 90, varO = 0.8, mos_det = 0, meanMos = 14, dispMos = 1)
 dim(xd)
 head(xd)
-table(xd$net) #Note: for IRS, 'net' really means 'trial arm'. I will try to udpate these.
+table(xd$net) #Note: for IRS, 'net' really means 'trial arm'. I will try to update these.
 table(xd$hut)
 table(xd$sleeper)
 xd[xd$hut==1,]
@@ -186,7 +203,7 @@ hypothesis_test(trial = 9, aoi = c(2,4), dataset = xd)
 
 t1 <- Sys.time()
 power_calculator_IRS(parallelise = 0, trial = 9, varO = 0.9, trial_days = 15,
-                     rep_C = 2, rep_IRS = 4, nsim = 300, n_arms = 4, mos_det = 1, meanMos = 11, 
+                     rep_C = 2, rep_IRS = 4, nsim = 300, n_arms = 4, mos_det = 0, meanMos = 11, 
                  dispMos = 1.4, aoi = c(2,4), responses = mortalities_IRS)
 t2 <- Sys.time()
 t2 - t1
@@ -204,7 +221,7 @@ store_ci2 <- rep(0,length(av_mosquitoes)) # vector to hold upper CI
 
 #Make a loop: each time we vary meanMos
 for(j in 1:length(av_mosquitoes)){
-  xx <- power_calculator_IRS(parallelise = 0, trial = 9, varO = 0.9, trial_days = 15,
+  xx <- power_calculator_IRS(parallelise = 2, trial = 9, varO = 0.9, trial_days = 25,
                              rep_C = 2, rep_IRS = 4, nsim = 400, n_arms = 4, mos_det = 1, meanMos = av_mosquitoes[j], 
                              dispMos = 1.4, aoi = c(2,4), responses = mortalities_IRS)
   store_power[j] <- xx[1]

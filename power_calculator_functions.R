@@ -19,15 +19,15 @@ repeat_fn <- function(sttr, repp, repC){
   return(bray)
 }
 
-simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
+simulate_trial_ITN <- function(n_arms, npr, mos_det = 0, meanMos, dispMos = 1.5,
                            rotations = 1, responses, varO = 0.9){
   #Check length(responses) == n_arms
   if(n_arms != length(responses)){
     print('Operation was not executed. Check the number of arms, and corresponding vector of mosquito mortalities')
     return(-9)
   }
-  if(npw > n_arms){
-    print('Operation was not executed. Rethink trial design (npw should be less than or equal to n_arms)')
+  if(npr > n_arms){
+    print('Operation was not executed. Rethink trial design (npr should be less than or equal to n_arms)')
     return(-9)
   }
   if(rotations < 1){ #At the moment, we need at least 1 rotation
@@ -57,7 +57,7 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
     expand.grid(
       hut = factor(1:ncol(aux2)),
       week = 1:nrow(aux2),
-      night = 1:npw
+      night = 1:npr
     )
   mosdata <- mosdata[order(mosdata$hut, mosdata$week, mosdata$night),]
   
@@ -65,18 +65,18 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
   count <- 1
   for(i in 1:n_arms){
     for(j in 1:n_arms){
-      mosdata$net[((npw*(count-1))+1):(npw*count)]  <- rep(aux2[i,j],npw)
+      mosdata$net[((npr*(count-1))+1):(npr*count)]  <- rep(aux2[i,j],npr)
       count <- count + 1
     }
   }
   #table(mosdata$net, useNA = 'a')
   mosdata$sleeper <- NA
-  aux3 <- sample(1:7)
+  aux3 <- sample(1:n_arms) #was 7- a mistake??
   
   for(i in 1:n_arms){ # number of weeks for one rotation
     aux4 <- c(aux3[c(i:n_arms)],aux3[seq_len(i-1)])
     #print(aux4)
-    for(j in 1:npw){ #nights per week
+    for(j in 1:npr){ #nights per week
       mosdata[mosdata$week==i & mosdata$night==j,]$sleeper <- 
         c(aux4[c(j:n_arms)],aux4[seq_len(j-1)])
     }
@@ -85,7 +85,7 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
   #Do we have rotation > 1? What if rotation > 2??
   if(rotations > 1){
     if(rotations <= 2){
-      mosdata$day <- npw*(mosdata$week - 1) + mosdata$night
+      mosdata$day <- npr*(mosdata$week - 1) + mosdata$night
       extra <- round((rotations - 1)*dim(mosdata)[1] / n_arms)
       mosdataX <- mosdata[mosdata$day <= extra,]
       mosdataX$day <- mosdataX$day + max(mosdata$day)
@@ -93,7 +93,7 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
       #Now add it on to the existing trial design
       mosdata <- rbind(mosdata,mosdataX)
     }else{
-      mosdata$day <- npw*(mosdata$week - 1) + mosdata$night
+      mosdata$day <- npr*(mosdata$week - 1) + mosdata$night
       intt <- as.integer(rotations - 1)
       #print(paste0('intt: ',intt))
       dec <- rotations - intt - 1
@@ -114,7 +114,7 @@ simulate_trial_ITN <- function(n_arms, npw, mos_det = 0, meanMos, dispMos = 1.5,
       mosdata <- rbind(mosdata,mosdataX)
     }
   }else{
-    mosdata$day <- npw*(mosdata$week - 1) + mosdata$night
+    mosdata$day <- npr*(mosdata$week - 1) + mosdata$night
   }
   
   #Now make a unique identifier for each data point
@@ -468,16 +468,17 @@ hypothesis_test <- function(trial,aoi,NIM=0.7, dataset){
   }
 }
 
-power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, varO = 0.9, 
+#Add NIM?
+power_calculator_ITN <- function(parallelise = 0, trial, npr, rotations = 1, varO = 0.9, 
                  nsim = 1000, n_arms, mos_det = 0, meanMos, dispMos = 1.5,
-                 aoi, responses){
+                 aoi, responses, NIM = 0.7){
   if(parallelise!=0 & parallelise!=1 & parallelise!=2){
     print('Operation was not executed. Parallelise must take a value of (i) 0 (code not parallelised); (ii) Parallelised for Windows; (iii) Parallilised for Mac. If in doubt, set to zero')
     return(-9)
   }
   if(parallelise==0){
     sz <- lapply(1:nsim, function(...) hypothesis_test(trial = trial, aoi = aoi, 
-                                                          dataset = simulate_trial_ITN(n_arms = n_arms, npw = npw, 
+                                                    NIM = NIM, dataset = simulate_trial_ITN(n_arms = n_arms, npr = npr, 
                                                                                    rotations = rotations, mos_det = mos_det, meanMos = meanMos, 
                                                                                    dispMos = dispMos, responses = responses,
                                                                                    varO = varO)))
@@ -488,16 +489,17 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
     n_armsY <- n_arms
     trialY <- trial
     aoiY <- aoi
+    NIMY <- NIM
     dispMosY <- dispMos
     meanMosY <- meanMos
     varOY <- varO
     responsesY <- responses
-    npwY <- npw
+    nprY <- npr
     mos_detY <- mos_det
     rotationsY <- rotations
     
     cl <- makeCluster(ncores)
-    clusterExport(cl,'npwY', envir = environment())
+    clusterExport(cl,'nprY', envir = environment())
     clusterExport(cl,'rotationsY', envir = environment())
     clusterExport(cl,'responsesY', envir = environment())
     clusterExport(cl,'varOY', envir = environment())
@@ -506,6 +508,7 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
     clusterExport(cl,'dispMosY', envir = environment())
     clusterExport(cl,'n_armsY', envir = environment())
     clusterExport(cl,'aoiY', envir = environment())
+    clusterExport(cl,'NIMY', envir = environment())
     clusterExport(cl,'trialY', envir = environment())
     clusterExport(cl,'hypothesis_test')
     clusterExport(cl,'simulate_trial')
@@ -516,8 +519,8 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
       library(GLMMmisc)
       library("optimx")
     })
-    sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY,
-                                                              dataset = simulate_trial_ITN(n_arms = n_armsY, npw = npwY,
+    sz <- parLapply(cl, 1:nsim, function(...) hypothesis_test(trial = trialY, aoi = aoiY, NIM = NIMY,
+                                                              dataset = simulate_trial_ITN(n_arms = n_armsY, npr = nprY,
                                                                                        rotations = rotationsY, mos_det = mos_detY, meanMos = meanMosY,
                                                                                        dispMos = dispMosY, responses = responsesY,
                                                                                        varO = varOY)))
@@ -525,8 +528,8 @@ power_calculator_ITN <- function(parallelise = 0, trial, npw, rotations = 1, var
   }
   if(parallelise==2){
     ncores <- detectCores() - 1
-    sz <- mclapply(1:nsim, function(...) hypothesis_test(trial = trial, aoi = aoi, 
-                                                dataset = simulate_trial_ITN(n_arms = n_arms, npw = npw, 
+    sz <- mclapply(1:nsim, function(...) hypothesis_test(trial = trial, aoi = aoi, NIM = NIM,
+                                                dataset = simulate_trial_ITN(n_arms = n_arms, npr = npr, 
                                                               rotations = rotations, mos_det = mos_det, meanMos = meanMos, 
                                                                 dispMos = dispMos, responses = responses,
                                                                   varO = varO)))
