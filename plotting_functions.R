@@ -199,7 +199,7 @@ error_bar_prop <- function(dataa = df, arm = 'C', arm_title = 'Control',
                  aes(x=day, y = prop, size=total, color = factor(hut))) + 
       guides(size='none', col = guide_legend(nrow = 1, byrow = TRUE)) +
       ylab("Proportion of mosquitoes killed") + ggtitle( arm_title) + labs(color='Hut') + 
-      xlab("Study Day") + themeJDC + scale_y_continuous(breaks=c(0,.5,1)) + # + labs(color = "Hut")
+      xlab("Study Day") + themeJDC + scale_y_continuous(breaks=c(0,.5,1), limits = c(0,1)) + # + labs(color = "Hut")
       theme(legend.position = strr) + scale_x_continuous(limits = c(minn,maxx))
   }else{
     ggplot() + geom_errorbar(data = dataa[dataa$treatment== arm ,],
@@ -435,7 +435,7 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
     aux$group <- ordered(aux$group, 
                            levels = c('Fed Alive','Fed Dead','Unfed Dead','Unfed Alive'))
     sz <- text_size #text size of labels
-    bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=net, fill = group, y=valuePC2),
+    bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=factor(net, level = net_names), fill = group, y=valuePC2),
                                     position="stack", stat="identity") + 
       scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6])) +
       themeJDC + coord_flip() + theme(legend.position = 'bottom',
@@ -482,9 +482,11 @@ bfi_all_arms <- function(dataa = df, deterr = 0,
       aux$group <- ordered(aux$group, 
                          levels = c('Fed Alive','Fed Dead','Unfed Dead','Unfed Alive','Deterred'))
       sz <- text_size
-      bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=net, fill = group, y=valuePC2),
+      
+      #Feb 2025: looks like the levels of 'aux' are not inherited from the original data frame? 
+      bfi_plot <- ggplot() + geom_bar(data = aux, aes(x=factor(net,level = net_names), fill = group, y=valuePC2),
                                       position="stack", stat="identity") + 
-        scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6],cb[7])) +
+        scale_fill_manual(name = 'Status', values = c(cb[4],cb[3],cb[5],cb[6],cb[7])) + 
         themeJDC + coord_flip() + theme(legend.position = 'bottom',
                                         axis.title = element_blank(), axis.ticks = element_blank(),
                                         axis.text = element_blank()) + ggtitle('    Blood Fed per feeding attempt') +      
